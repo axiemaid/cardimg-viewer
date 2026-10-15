@@ -580,6 +580,14 @@ footer .sep { margin: 0 0.5rem; }
   .set-member { width: 140px; }
 }
 
+@media (max-width: 460px) {
+  #topbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab-toggle { margin: 0 auto; }
+}
+
 @media (max-width: 600px) {
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.2rem; }
   .card-info { padding: 0.3rem 0.15rem; }
