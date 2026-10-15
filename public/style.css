@@ -579,9 +579,9 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 @media (max-width: 480px) {
-  .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-  .card-info { padding: 0.4rem 0.5rem; }
-  .card-txid, .card-size { font-size: 0.65rem; }
+  .grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .card-info { padding: 0.3rem 0.15rem; }
+  .card-txid, .card-size { font-size: 0.6rem; }
   .sets-grid { grid-template-columns: 1fr; }
   .set-member { width: 120px; }
 }
