@@ -108,7 +108,7 @@ function showUploadPage(txid) {
   document.getElementById('gallery-view').style.display = 'none'
   document.getElementById('card-page').style.display = 'none'
   document.getElementById('upload-page').style.display = ''
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'))
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'uploads'))
   renderUploadPage(txid)
 }
 
@@ -116,7 +116,7 @@ function showCardPage(txid) {
   document.getElementById('gallery-view').style.display = 'none'
   document.getElementById('upload-page').style.display = 'none'
   document.getElementById('card-page').style.display = ''
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'))
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'cards'))
   renderCardPage(txid)
 }
 
