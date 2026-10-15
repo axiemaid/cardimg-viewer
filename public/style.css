@@ -158,7 +158,7 @@ body {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -565,18 +565,6 @@ footer .sep { margin: 0 0.5rem; }
   .detail-image-wrap img { max-height: 60vh; }
 }
 
-@media (max-width: 1200px) {
-  .grid { grid-template-columns: repeat(6, 1fr); }
-}
-
-@media (max-width: 1024px) {
-  .grid { grid-template-columns: repeat(5, 1fr); }
-}
-
-@media (max-width: 860px) {
-  .grid { grid-template-columns: repeat(4, 1fr); }
-}
-
 @media (max-width: 768px) {
   #topbar {
     padding: 0.6rem 1rem;
@@ -585,7 +573,7 @@ footer .sep { margin: 0 0.5rem; }
   .title { font-size: 0.95rem; }
   .stats { font-size: 0.75rem; }
   #gallery { padding: 0.5rem 0.5rem 1rem; }
-  .grid { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 110px), 1fr)); gap: 0.4rem; }
   .sets-grid { grid-template-columns: 1fr; padding: 1rem; }
   .set-member { width: 140px; }
 }
@@ -596,10 +584,6 @@ footer .sep { margin: 0 0.5rem; }
   .card-txid, .card-size { font-size: 0.6rem; }
   .sets-grid { grid-template-columns: 1fr; }
   .set-member { width: 120px; }
-}
-
-@media (max-width: 480px) {
-  .grid { grid-template-columns: repeat(3, 1fr); gap: 0.3rem; }
 }
 
 @media (max-width: 360px) {
