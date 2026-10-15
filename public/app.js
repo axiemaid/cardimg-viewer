@@ -283,10 +283,8 @@ async function renderUploadPage(txid) {
         </div>
       `).join('')
       cardsetHtml = `
-        <div class="cardset-refs">
-          <h3>Appears in ${data.cardsets.length} card${data.cardsets.length > 1 ? 's' : ''}</h3>
-          ${refs}
-        </div>
+        <h3>Appears in ${data.cardsets.length} card${data.cardsets.length > 1 ? 's' : ''}</h3>
+        ${refs}
       `
     }
   } catch (e) {
