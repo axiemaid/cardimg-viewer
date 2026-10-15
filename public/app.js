@@ -251,7 +251,11 @@ async function renderUploadPage(txid) {
 
   if (!card) {
     // Not in index — show what we can from txid
-    img.src = `${API}/tx/${txid}`
+    // Show thumbnail immediately, upgrade to full image when loaded
+    img.src = `${API}/thumb/tx/${txid}`
+    const fullImg = new Image()
+    fullImg.onload = () => { img.src = fullImg.src }
+    fullImg.src = `${API}/tx/${txid}`
     meta.innerHTML = `
       <h3>TxID</h3>
       <div class="meta-value">${txid}</div>
@@ -266,7 +270,11 @@ async function renderUploadPage(txid) {
     return
   }
 
-  img.src = `${API}/img/${card.hash}`
+  // Show thumbnail immediately (cached/fast), then upgrade to full image
+  img.src = `${API}/thumb/${card.hash}`
+  const fullImg = new Image()
+  fullImg.onload = () => { img.src = fullImg.src }
+  fullImg.src = `${API}/img/${card.hash}`
 
   const isUnconfirmed = !card.blockHeight
 
