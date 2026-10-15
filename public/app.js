@@ -279,7 +279,6 @@ async function renderUploadPage(txid) {
       const refs = data.cardsets.map(s => `
         <div class="cardset-ref-item" onclick="navigate('/card/${s.cardsetTxid}')">
           <span>${shortHash(s.cardsetTxid)}</span>
-          <span class="role">${s.role}</span>
         </div>
       `).join('')
       cardsetHtml = `
