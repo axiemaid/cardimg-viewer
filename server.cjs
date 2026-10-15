@@ -6,9 +6,9 @@
  * Talks to the CARDIMG API for data. No own state.
  *
  * Usage:
- *   node server.cjs                          # Default port 3015
+ *   node server.cjs                          # Default port 3015, uses public/config.js
  *   node server.cjs --port 3025              # Custom port
- *   node server.cjs --api http://localhost:3014   # Custom API URL
+ *   node server.cjs --api http://localhost:3014   # Override API URL (skips static config.js)
  */
 
 const path = require('path')
@@ -16,35 +16,37 @@ const fs = require('fs')
 const express = require('express')
 
 const DEFAULT_PORT = 3015
-const DEFAULT_API = 'http://localhost:3014'
 
 function main() {
   const args = process.argv.slice(2)
   const portArg = args.indexOf('--port')
   const port = portArg >= 0 ? parseInt(args[portArg + 1]) : DEFAULT_PORT
   const apiArg = args.indexOf('--api')
-  const apiUrl = apiArg >= 0 ? args[apiArg + 1] : DEFAULT_API
+  const apiUrl = apiArg >= 0 ? args[apiArg + 1] : null
 
   const app = express()
 
-  // Inject API URL into client-side JS via env-like endpoint
-  app.get('/config.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript')
-    res.send(`window.CARDIMG_API = ${JSON.stringify(apiUrl)};`)
-  })
+  const publicDir = path.join(__dirname, 'public')
+
+  // If --api is passed, override the static config.js
+  if (apiUrl) {
+    app.get('/config.js', (req, res) => {
+      res.setHeader('Content-Type', 'application/javascript')
+      res.send(`window.CARDIMG_API = ${JSON.stringify(apiUrl)};`)
+    })
+  }
 
   // Serve static files from public/
-  const publicDir = path.join(__dirname, 'public')
   app.use(express.static(publicDir))
 
-  // Fallback to index.html for any non-asset route (for deep linking)
+  // Fallback to index.html for any non-asset route (for client-side routing)
   app.get('*', (req, res) => {
     res.sendFile(path.join(publicDir, 'index.html'))
   })
 
   app.listen(port, () => {
     console.log(`CARDIMG Viewer running at http://localhost:${port}`)
-    console.log(`API: ${apiUrl}`)
+    console.log(`API: ${apiUrl || 'https://cardimg.axiemaid.com (from public/config.js)'}`)
   })
 }
 
