@@ -562,6 +562,12 @@ footer .sep { margin: 0 0.5rem; }
   border-top: 1px solid var(--border);
 }
 
+.cardset-refs {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
 .cardset-ref-item {
   display: flex;
   justify-content: space-between;
