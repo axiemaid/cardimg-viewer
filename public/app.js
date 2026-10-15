@@ -306,9 +306,6 @@ async function renderUploadPage(txid) {
     <div class="meta-value">${card.txid}</div>
     <a href="https://whatsonchain.com/tx/${card.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
 
-    <h3>SHA-256</h3>
-    <div class="meta-value">${card.hash}</div>
-
     <h3>Block</h3>
     <p>${isUnconfirmed ? '<span style="color:#fbbf24">Unconfirmed (mempool)</span>' : card.blockHeight}</p>
 
