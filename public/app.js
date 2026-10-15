@@ -294,7 +294,7 @@ async function renderUploadPage(txid) {
         return `
           <div class="cardset-ref">
             <div class="cardset-thumbs">${thumbs}</div>
-            <a href="/card/${s.cardsetTxid}" class="cardset-view-link">View all →</a>
+            <a href="/card/${s.cardsetTxid}" class="cardset-view-link">View card →</a>
           </div>
         `
       }))

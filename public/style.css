@@ -573,7 +573,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .cardset-thumb {
-  width: 80px;
+  width: 120px;
   aspect-ratio: 3/4;
   object-fit: cover;
   border-radius: 6px;
