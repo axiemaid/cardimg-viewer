@@ -573,7 +573,7 @@ footer .sep { margin: 0 0.5rem; }
   .title { font-size: 0.95rem; }
   .stats { font-size: 0.75rem; }
   #gallery { padding: 0.5rem 0.5rem 1rem; }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 110px), 1fr)); gap: 0.4rem; }
+  .grid { gap: 0.4rem; }
   .sets-grid { grid-template-columns: 1fr; padding: 1rem; }
   .set-member { width: 140px; }
 }
