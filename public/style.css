@@ -562,6 +562,39 @@ footer .sep { margin: 0 0.5rem; }
   border-top: 1px solid var(--border);
 }
 
+.cardset-ref {
+  margin-top: 0.5rem;
+}
+
+.cardset-thumbs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardset-thumb {
+  width: 80px;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg-elev2);
+}
+
+.cardset-thumb:hover {
+  border: 2px solid var(--accent);
+}
+
+.cardset-view-link {
+  display: inline-block;
+  font-size: 0.88rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cardset-view-link:hover { color: var(--accent-hover); }
+
 .cardset-ref-item {
   display: flex;
   justify-content: space-between;

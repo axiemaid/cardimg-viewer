@@ -23,9 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   document.addEventListener('click', e => {
-    if (e.target.closest('.back-link')) {
+    const backLink = e.target.closest('.back-link')
+    const viewLink = e.target.closest('.cardset-view-link')
+    if (backLink) {
       e.preventDefault()
       window.history.back()
+    } else if (viewLink) {
+      e.preventDefault()
+      navigate(viewLink.getAttribute('href'))
     }
   })
 
@@ -276,14 +281,26 @@ async function renderUploadPage(txid) {
     const res = await fetch(`${API}/card/${card.hash}/sets`)
     const data = await res.json()
     if (data.cardsets && data.cardsets.length > 0) {
-      const refs = data.cardsets.map(s => `
-        <div class="cardset-ref-item" onclick="navigate('/card/${s.cardsetTxid}')">
-          <span>${shortHash(s.cardsetTxid)}</span>
-        </div>
-      `).join('')
+      const refs = await Promise.all(data.cardsets.map(async s => {
+        // Fetch full cardset to get other members
+        const setRes = await fetch(`${API}/sets/${s.cardsetTxid}`)
+        const setData = await setRes.json()
+        // Other members (exclude current card)
+        const others = (setData.members || []).filter(m => m.txid !== card.txid)
+        const thumbs = others.map(m => {
+          const src = m.hash ? `${API}/thumb/${m.hash}` : `${API}/thumb/tx/${m.txid}`
+          return `<img src="${src}" alt="${shortHash(m.txid)}" class="cardset-thumb" onclick="navigate('/cardimg/${m.txid}')" />`
+        }).join('')
+        return `
+          <div class="cardset-ref">
+            <div class="cardset-thumbs">${thumbs}</div>
+            <a href="/card/${s.cardsetTxid}" class="cardset-view-link">View all →</a>
+          </div>
+        `
+      }))
       cardsetHtml = `
         <h3>Appears in ${data.cardsets.length} card${data.cardsets.length > 1 ? 's' : ''}</h3>
-        ${refs}
+        ${refs.join('')}
       `
     }
   } catch (e) {
