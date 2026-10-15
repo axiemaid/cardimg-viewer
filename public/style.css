@@ -580,7 +580,7 @@ footer .sep { margin: 0 0.5rem; }
   .tab-toggle { margin-left: auto; }
   .page-stats { font-size: 0.75rem; }
   #gallery { padding: 0.5rem 0.5rem 1rem; }
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.1rem; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-info { padding: 0.3rem 0.15rem; }
   .card-txid, .card-size { font-size: 0.6rem; }
   .sets-grid { grid-template-columns: 1fr; padding: 1rem; }
