@@ -22,15 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  document.getElementById('refresh-btn').addEventListener('click', () => {
-    if (activeTab === 'uploads') {
-      loadCards(true)
-    } else {
-      loadSets(true)
-    }
-    loadStats()
-  })
-
   document.addEventListener('click', e => {
     if (e.target.closest('.back-link')) {
       e.preventDefault()
@@ -149,7 +140,6 @@ async function loadCards(isRefresh) {
   const empty = document.getElementById('empty')
 
   if (isRefresh) {
-    document.getElementById('refresh-btn').classList.add('spinning')
   }
 
   try {
@@ -187,7 +177,6 @@ async function loadCards(isRefresh) {
   } catch (e) {
     loading.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   } finally {
-    document.getElementById('refresh-btn').classList.remove('spinning')
   }
 }
 
@@ -333,7 +322,6 @@ async function loadSets(isRefresh) {
   const empty = document.getElementById('sets-empty')
 
   if (isRefresh) {
-    document.getElementById('refresh-btn').classList.add('spinning')
   }
 
   try {
@@ -371,7 +359,6 @@ async function loadSets(isRefresh) {
   } catch (e) {
     loading.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   } finally {
-    document.getElementById('refresh-btn').classList.remove('spinning')
   }
 }
 

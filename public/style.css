@@ -141,36 +141,12 @@ body {
 
 .stats .sep { margin: 0 0.4rem; color: var(--text-faint); }
 
-.refresh-btn {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  border-radius: 8px;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.refresh-btn:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  background: var(--bg-elev2);
-}
-
-.refresh-btn.spinning svg {
-  animation: spin 0.8s linear infinite;
-}
+/* --- Gallery --- */
 
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
-/* --- Gallery --- */
 
 #gallery {
   flex: 1;
