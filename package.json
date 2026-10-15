@@ -1,0 +1,13 @@
+{
+  "name": "cardimg-viewer",
+  "version": "1.0.0",
+  "description": "Clean, public-facing CARDIMG protocol viewer",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "dev": "node server.cjs --port 3015"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}
