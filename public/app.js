@@ -213,7 +213,7 @@ function createCardElement(card, index) {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        img.src = `${API}/img/${card.hash}`
+        img.src = `${API}/thumb/${card.hash}`
         img.onload = () => img.classList.remove('loading')
         img.onerror = () => {
           img.classList.remove('loading')
@@ -410,7 +410,7 @@ function createSetCard(set) {
           img.onerror = () => {
             slot.querySelector('.set-placeholder').textContent = 'N/A'
           }
-          img.src = `${API}/tx/${txid}`
+          img.src = `${API}/thumb/tx/${txid}`
         })
         observer.unobserve(el)
       }
@@ -450,14 +450,14 @@ async function renderCardPage(txid) {
 
       if (member.hash) {
         memberEl.innerHTML = `
-          <img src="${API}/img/${member.hash}" alt="Upload ${shortHash(member.txid)}" />
+          <img src="${API}/thumb/${member.hash}" alt="Upload ${shortHash(member.txid)}" />
           <div class="set-member-role">${member.role}</div>
           <div class="set-member-txid">${shortHash(member.txid)}</div>
         `
         memberEl.querySelector('img').addEventListener('click', () => navigate(`/cardimg/${member.txid}`))
       } else {
         memberEl.innerHTML = `
-          <img src="${API}/tx/${member.txid}" alt="Upload ${shortHash(member.txid)}" />
+          <img src="${API}/thumb/tx/${member.txid}" alt="Upload ${shortHash(member.txid)}" />
           <div class="set-member-role">${member.role}</div>
           <div class="set-member-txid">${shortHash(member.txid)}</div>
         `
