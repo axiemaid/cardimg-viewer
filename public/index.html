@@ -41,17 +41,35 @@
 
       <!-- Cards Tab -->
       <main id="sets-view" class="view" style="display:none">
-        <div class="page-header">
-          <h1>Cards</h1>
-        </div>
-        <div id="sets-loading" class="loading">
-          <div class="spinner"></div>
-          <p>Loading cards from chain…</p>
-        </div>
-        <div id="sets-grid" class="sets-grid" style="display:none"></div>
-        <div id="sets-empty" class="empty" style="display:none">
-          <p>No cards indexed yet.</p>
-        </div>
+        <!-- Card Code Index -->
+        <section id="card-code-index" class="card-code-section">
+          <div class="page-header">
+            <h1>Card Directory</h1>
+            <span class="page-stats" id="card-code-stats"></span>
+          </div>
+          <div id="card-code-grid" class="card-code-grid"></div>
+        </section>
+
+        <!-- Newest Cardsets Feed -->
+        <section id="cardsets-feed" class="cardsets-feed-section">
+          <div class="page-header">
+            <div class="feed-title-row">
+            <h1 id="cardsets-feed-title">Newest Cardsets</h1>
+            <div class="feed-title-right">
+              <span class="page-stats" id="sets-stats"></span>
+              <button id="clear-filter-btn" style="display:none">Clear filter</button>
+            </div>
+          </div>
+          </div>
+          <div id="sets-loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading cards from chain…</p>
+          </div>
+          <div id="sets-grid" class="sets-grid" style="display:none"></div>
+          <div id="sets-empty" class="empty" style="display:none">
+            <p>No cards indexed yet.</p>
+          </div>
+        </section>
       </main>
     </div>
 

@@ -492,9 +492,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 /* --- Set Members (shared: card detail page) --- */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+
 .set-members {
   display: flex;
   flex-wrap: wrap;
@@ -503,12 +501,6 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 /* --- Cardset refs (on upload detail page) --- */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  width: 200px;
-}
 
 .set-member img {
   width: 100%;
@@ -556,7 +548,6 @@ footer .sep { margin: 0 0.5rem; }
   align-items: center;
   gap: 0.5rem;
   width: 200px;
-}
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
@@ -613,6 +604,140 @@ footer .sep { margin: 0 0.5rem; }
   text-transform: uppercase;
 }
 
+/* --- Card Code Directory --- */
+
+.card-code-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.card-code-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.25rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.card-code-item {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  transition: color 0.15s;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.card-code-item:hover {
+  color: var(--text);
+}
+
+.card-code-item.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.card-code-item.empty {
+  color: var(--text-faint);
+}
+
+.card-code-item.empty:hover {
+  color: var(--text-dim);
+}
+
+.card-code-item.uncategorized {
+  font-style: italic;
+}
+
+.card-code-count {
+  color: var(--text-faint);
+}
+
+.card-code-item.active .card-code-count {
+  color: var(--accent-hover);
+}
+
+/* --- Cardsets Feed Section --- */
+
+.cardsets-feed-section {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cardsets-feed-section .page-header {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+
+/* --- Set Card Code Badge --- */
+
+.set-card-code {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  margin-right: 6px;
+}
+
+.set-card-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* --- Card Detail Header (card code variant) --- */
+
+.header-card-code {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.header-card-name {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* --- Clear Filter Button --- */
+
+.feed-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.feed-title-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#clear-filter-btn {
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#clear-filter-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 1000px) {
@@ -623,6 +748,7 @@ footer .sep { margin: 0 0.5rem; }
 
 @media (max-width: 1100px) {
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .card-code-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (max-width: 768px) {
@@ -637,6 +763,7 @@ footer .sep { margin: 0 0.5rem; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-info { padding: 0.3rem 0.15rem; }
   .card-txid, .card-size { font-size: 0.6rem; }
+  .card-code-grid { grid-template-columns: repeat(3, 1fr); }
   .sets-grid { grid-template-columns: 1fr; padding: 1rem; }
   .set-member { width: 120px; }
 }

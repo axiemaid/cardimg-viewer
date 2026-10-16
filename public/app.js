@@ -1,8 +1,11 @@
-/* CARDIMG Viewer — Client logic with routing */
+/* CARDIMG Viewer — Client logic with routing + card code directory */
 
 const API = window.CARDIMG_API || 'http://localhost:3014'
 let allCards = []
 let allSets = []
+let cardReference = []      // 42 card codes from card-reference.json
+let cardCodeMappings = {}   // { cardsetTxid → cardCode } from card-codes.json
+let activeCardFilter = null // null = show all, or 'C01' etc.
 let activeTab = 'uploads'
 
 // --- Init ---
@@ -25,7 +28,30 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', e => {
     const backLink = e.target.closest('.back-link')
     const viewLink = e.target.closest('.cardset-view-link')
-    if (backLink) {
+    const codeChip = e.target.closest('.card-code-item')
+    const clearFilter = e.target.closest('#clear-filter-btn')
+
+    if (clearFilter) {
+      e.preventDefault()
+      activeCardFilter = null
+      updateCardsetsFeedTitle()
+      renderSetsGrid()
+      renderCardCodeGrid()
+    } else if (codeChip) {
+      e.preventDefault()
+      const code = codeChip.dataset.code
+      // Toggle off if clicking same
+      if (activeCardFilter === code) {
+        activeCardFilter = null
+      } else {
+        activeCardFilter = code
+      }
+      updateCardsetsFeedTitle()
+      renderCardCodeGrid()
+      renderSetsGrid()
+      // Scroll down to feed
+      document.getElementById('cardsets-feed').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else if (backLink) {
       e.preventDefault()
       window.history.back()
     } else if (viewLink) {
@@ -35,9 +61,32 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // Initial route
+  loadCardReference()
   loadStats()
   handleRoute()
 })
+
+// --- Load reference data ---
+
+async function loadCardReference() {
+  try {
+    const res = await fetch('/card-reference.json')
+    cardReference = await res.json()
+  } catch (e) {
+    console.error('Failed to load card reference:', e)
+  }
+  try {
+    const res = await fetch('/card-codes.json')
+    const data = await res.json()
+    cardCodeMappings = data.mappings || {}
+  } catch (e) {
+    console.error('Failed to load card codes:', e)
+  }
+  // If we're on the cards tab, render the grid
+  if (activeTab === 'cards') {
+    renderCardCodeGrid()
+  }
+}
 
 // --- Routing ---
 
@@ -101,6 +150,8 @@ function showGallery(tab) {
     setsView.style.display = ''
     setsView.classList.add('active')
     if (allSets.length === 0) loadSets()
+    // Render card code grid (may already be loaded from init)
+    renderCardCodeGrid()
   }
 }
 
@@ -127,10 +178,11 @@ async function loadStats() {
     const res = await fetch(`${API}/stats`)
     const data = await res.json()
     document.getElementById('stat-count').textContent = data.totalImages.toLocaleString()
-    document.getElementById('stat-size').textContent = formatBytes(data.totalBytes)
+    document.getElementById('stat-size')?.textContent ? '' : '' // stat-size may not exist
 
     if (data.sets) {
-      // could update a badge here if re-added
+      const setsStats = document.getElementById('sets-stats')
+      if (setsStats) setsStats.textContent = `${data.sets.totalSets} cardsets`
     }
   } catch (e) {
     // silent fail
@@ -143,9 +195,6 @@ async function loadCards(isRefresh) {
   const grid = document.getElementById('grid')
   const loading = document.getElementById('loading')
   const empty = document.getElementById('empty')
-
-  if (isRefresh) {
-  }
 
   try {
     const res = await fetch(`${API}/list`)
@@ -181,7 +230,6 @@ async function loadCards(isRefresh) {
     loadStats()
   } catch (e) {
     loading.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
-  } finally {
   }
 }
 
@@ -229,22 +277,18 @@ async function renderUploadPage(txid) {
   const img = document.getElementById('upload-image')
   const meta = document.getElementById('upload-meta')
 
-  // Update page header
   const h1 = document.querySelector('#upload-page .page-header h1')
   h1.innerHTML = '<span class="header-protocol">CARDIMG</span> <span class="header-txid">' + txid + '</span>'
 
   img.src = ''
   meta.innerHTML = '<div class="spinner"></div>'
 
-  // Find in allCards first, otherwise fetch from API
   let card = allCards.find(c => c.txid === txid)
 
   if (!card) {
     try {
       const res = await fetch(`${API}/tx/${txid}`)
       if (!res.ok) throw new Error('Not found')
-      // /tx/:txid returns raw image bytes — we need metadata
-      // Try finding by hash from /list
       const listRes = await fetch(`${API}/list`)
       const list = await listRes.json()
       card = list.find(c => c.txid === txid)
@@ -255,16 +299,13 @@ async function renderUploadPage(txid) {
   }
 
   if (!card) {
-    // Not in index — show what we can from txid
     img.src = `${API}/thumb/tx/${txid}`
     meta.innerHTML = `
       <h3>TxID</h3>
       <div class="meta-value">${txid}</div>
       <a href="https://whatsonchain.com/tx/${txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
-
       <h3>Status</h3>
       <p>Not in local index. Image fetched from chain.</p>
-
       <h3>Direct Link</h3>
       <a href="${API}/tx/${txid}" target="_blank" rel="noopener">Open raw image →</a>
     `
@@ -282,10 +323,8 @@ async function renderUploadPage(txid) {
     const data = await res.json()
     if (data.cardsets && data.cardsets.length > 0) {
       const refs = await Promise.all(data.cardsets.map(async s => {
-        // Fetch full cardset to get other members
         const setRes = await fetch(`${API}/sets/${s.cardsetTxid}`)
         const setData = await setRes.json()
-        // Other members (exclude current card)
         const others = (setData.members || []).filter(m => m.txid !== card.txid)
         const thumbs = others.map(m => {
           const src = m.hash ? `${API}/thumb/${m.hash}` : `${API}/thumb/tx/${m.txid}`
@@ -303,9 +342,7 @@ async function renderUploadPage(txid) {
         ${refs.join('')}
       `
     }
-  } catch (e) {
-    // silent
-  }
+  } catch (e) {}
 
   meta.innerHTML = `
     <h3>TxID</h3>
@@ -325,15 +362,88 @@ async function renderUploadPage(txid) {
   `
 }
 
-// --- Cards Gallery ---
+// --- Cards Gallery: Card Code Directory ---
+
+function getCardCodeForSet(set) {
+  return cardCodeMappings[set.cardsetTxid] || null
+}
+
+function buildCodeCounts() {
+  const counts = {}
+  let uncategorized = 0
+
+  allSets.forEach(set => {
+    const code = getCardCodeForSet(set)
+    if (code) {
+      counts[code] = (counts[code] || 0) + 1
+    } else {
+      uncategorized++
+    }
+  })
+
+  return { counts, uncategorized }
+}
+
+function renderCardCodeGrid() {
+  const grid = document.getElementById('card-code-grid')
+  if (!grid) return
+
+  const { counts, uncategorized } = buildCodeCounts()
+  const totalSets = allSets.length
+
+  // Update stats
+  const statsEl = document.getElementById('card-code-stats')
+  if (statsEl) statsEl.textContent = `${totalSets} cardsets indexed`
+
+  grid.innerHTML = ''
+
+  // Render all 42 reference codes
+  cardReference.forEach(card => {
+    const count = counts[card.code] || 0
+    const isActive = activeCardFilter === card.code
+    const hasSets = count > 0
+
+    const item = document.createElement('div')
+    item.className = `card-code-item ${isActive ? 'active' : ''} ${hasSets ? '' : 'empty'}`
+    item.dataset.code = card.code
+    item.textContent = `${card.code} (${count})`
+    grid.appendChild(item)
+  })
+
+  // Uncategorized bucket
+  if (uncategorized > 0 || activeCardFilter === 'UNCATEGORIZED') {
+    const isActive = activeCardFilter === 'UNCATEGORIZED'
+    const item = document.createElement('div')
+    item.className = `card-code-item uncategorized ${isActive ? 'active' : ''}`
+    item.dataset.code = 'UNCATEGORIZED'
+    item.textContent = `Uncategorized (${uncategorized})`
+    grid.appendChild(item)
+  }
+}
+
+function updateCardsetsFeedTitle() {
+  const titleEl = document.getElementById('cardsets-feed-title')
+  const clearBtn = document.getElementById('clear-filter-btn')
+  if (activeCardFilter) {
+    if (activeCardFilter === 'UNCATEGORIZED') {
+      titleEl.textContent = 'Uncategorized Cardsets'
+    } else {
+      const ref = cardReference.find(c => c.code === activeCardFilter)
+      titleEl.textContent = ref ? `${activeCardFilter} — ${ref.name}` : activeCardFilter
+    }
+    if (clearBtn) clearBtn.style.display = ''
+  } else {
+    titleEl.textContent = 'Newest Cardsets'
+    if (clearBtn) clearBtn.style.display = 'none'
+  }
+}
+
+// --- Cards Gallery: Cardsets Feed ---
 
 async function loadSets(isRefresh) {
   const grid = document.getElementById('sets-grid')
   const loading = document.getElementById('sets-loading')
   const empty = document.getElementById('sets-empty')
-
-  if (isRefresh) {
-  }
 
   try {
     const res = await fetch(`${API}/sets/list`)
@@ -351,6 +461,7 @@ async function loadSets(isRefresh) {
     allSets = sets
 
     loading.style.display = 'none'
+    renderCardCodeGrid()
 
     if (sets.length === 0) {
       empty.style.display = 'flex'
@@ -360,16 +471,56 @@ async function loadSets(isRefresh) {
 
     empty.style.display = 'none'
     grid.style.display = 'grid'
-    grid.innerHTML = ''
-
-    sets.forEach(set => {
-      grid.appendChild(createSetCard(set))
-    })
-
+    renderSetsGrid()
     loadStats()
   } catch (e) {
     loading.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
-  } finally {
+  }
+}
+
+function getFilteredSets() {
+  if (!activeCardFilter) return allSets
+
+  if (activeCardFilter === 'UNCATEGORIZED') {
+    return allSets.filter(s => !getCardCodeForSet(s))
+  }
+
+  return allSets.filter(s => getCardCodeForSet(s) === activeCardFilter)
+}
+
+function renderSetsGrid() {
+  const grid = document.getElementById('sets-grid')
+  if (!grid) return
+
+  const filtered = getFilteredSets()
+
+  if (filtered.length === 0) {
+    grid.style.display = 'none'
+    const empty = document.getElementById('sets-empty')
+    if (empty) {
+      empty.style.display = 'flex'
+      empty.querySelector('p').textContent = activeCardFilter
+        ? `No cardsets for ${activeCardFilter}.`
+        : 'No cards indexed yet.'
+    }
+    return
+  }
+
+  const empty = document.getElementById('sets-empty')
+  if (empty) empty.style.display = 'none'
+  grid.style.display = 'grid'
+  grid.innerHTML = ''
+
+  filtered.forEach(set => {
+    grid.appendChild(createSetCard(set))
+  })
+
+  // Update sets count
+  const setsStats = document.getElementById('sets-stats')
+  if (setsStats) {
+    setsStats.textContent = activeCardFilter
+      ? `${filtered.length} cardset${filtered.length !== 1 ? 's' : ''}`
+      : `${filtered.length} cardsets`
   }
 }
 
@@ -379,6 +530,7 @@ function createSetCard(set) {
   el.style.position = 'relative'
 
   const isUnconfirmed = !set.blockHeight
+  const cardCode = getCardCodeForSet(set)
 
   const thumbSlots = set.txids.slice(0, 4).map(txid => {
     return `<div class="set-thumb-slot" data-txid="${txid}"><div class="set-placeholder">…</div></div>`
@@ -387,7 +539,10 @@ function createSetCard(set) {
   el.innerHTML = `
     <div class="set-card-images">${thumbSlots}</div>
     <div class="set-card-info">
-      <div class="set-card-txid" title="${set.cardsetTxid}">${shortHash(set.cardsetTxid)}</div>
+      <div class="set-card-left">
+        ${cardCode ? `<span class="set-card-code">${cardCode}</span>` : ''}
+        <span class="set-card-txid" title="${set.cardsetTxid}">${shortHash(set.cardsetTxid)}</span>
+      </div>
       <div class="set-card-members">${set.memberCount} uploads</div>
     </div>
     ${isUnconfirmed ? '<span class="set-card-badge" style="color:#fbbf24">unconfirmed</span>' : ''}
@@ -426,9 +581,15 @@ async function renderCardPage(txid) {
   const txidEl = document.getElementById('card-detail-txid')
   const membersEl = document.getElementById('card-detail-members')
 
-  // Update page header
   const h1 = document.querySelector('#card-page .page-header h1')
-  h1.innerHTML = '<span class="header-protocol">CARDSET</span> <span class="header-txid">' + txid + '</span>'
+  const cardCode = cardCodeMappings[txid]
+  const ref = cardCode ? cardReference.find(c => c.code === cardCode) : null
+
+  if (cardCode && ref) {
+    h1.innerHTML = `<span class="header-protocol">CARDSET</span> <span class="header-card-code">${cardCode}</span> <span class="header-card-name">${ref.name}</span>`
+  } else {
+    h1.innerHTML = '<span class="header-protocol">CARDSET</span> <span class="header-txid">' + txid + '</span>'
+  }
 
   txidEl.innerHTML = ''
   membersEl.innerHTML = '<div class="spinner"></div>'
