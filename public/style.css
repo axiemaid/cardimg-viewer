@@ -420,6 +420,14 @@ body {
 
 /* --- Cardset detail: thumbnail strip + zoom hint inside detail-image-wrap --- */
 
+.card-primary-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .card-thumb-strip {
   display: flex;
   flex-wrap: wrap;
