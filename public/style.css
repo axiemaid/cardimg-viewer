@@ -426,8 +426,9 @@ body {
 }
 
 .card-gallery {
-  flex: 1;
+  flex: 0 1 600px;
   min-width: 0;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
