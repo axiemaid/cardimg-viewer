@@ -579,8 +579,10 @@ function createSetCard(set) {
 // --- Card Detail Page ---
 
 async function renderCardPage(txid) {
-  const membersEl = document.getElementById('card-detail-members')
+  const img = document.getElementById('card-primary-image')
   const metaEl = document.getElementById('card-detail-meta')
+  const thumbStrip = document.getElementById('card-thumb-strip')
+  const zoomHint = document.getElementById('card-zoom-hint')
 
   const h1 = document.querySelector('#card-page .page-header h1')
   const cardCode = cardCodeMappings[txid]
@@ -592,18 +594,23 @@ async function renderCardPage(txid) {
     h1.innerHTML = '<span class="header-protocol">CARDSET</span> <span class="header-txid">' + txid + '</span>'
   }
 
-  membersEl.innerHTML = '<div class="spinner"></div>'
-  metaEl.innerHTML = ''
+  img.src = ''
+  metaEl.innerHTML = '<div class="spinner"></div>'
+  thumbStrip.innerHTML = ''
+
+  // Click primary image to open lightbox
+  img.addEventListener('click', () => {
+    if (img.src) openLightbox(img.src)
+  })
 
   try {
     const res = await fetch(`${API}/sets/${txid}`)
     if (!res.ok) throw new Error('Card not found')
     const set = await res.json()
 
-    membersEl.innerHTML = ''
+    const isUnconfirmed = !set.blockHeight
 
     // Build metadata sidebar
-    const isUnconfirmed = !set.blockHeight
     let metaHtml = ''
 
     if (cardCode && ref) {
@@ -616,7 +623,7 @@ async function renderCardPage(txid) {
 
     metaHtml += `
       <h3>Cardset TxID</h3>
-      <div style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;color:var(--text);word-break:break-all;line-height:1.6">${set.cardsetTxid}</div>
+      <div class="meta-value">${set.cardsetTxid}</div>
       <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
 
       <h3>Status</h3>
@@ -626,56 +633,19 @@ async function renderCardPage(txid) {
       <p>${set.memberCount} card${set.memberCount !== 1 ? 's' : ''} in this set</p>
     `
 
-    // List all members with links
-    metaHtml += '<h3>All Members</h3>'
     set.members.forEach(m => {
       metaHtml += `<p style="margin-bottom:0.3rem"><a href="/cardimg/${m.txid}" style="color:var(--text-dim)">${m.role}</a> — <span style="font-family:'SF Mono','Fira Code',monospace;font-size:0.72rem;color:var(--text-faint)">${shortHash(m.txid)}</span></p>`
     })
 
     metaEl.innerHTML = metaHtml
 
-    // Build gallery: primary image + thumbnail strip
-    const gallery = document.createElement('div')
-    gallery.className = 'card-gallery'
-
-    const primaryWrap = document.createElement('div')
-    primaryWrap.className = 'card-gallery-primary'
-
-    const primaryImg = document.createElement('img')
-    primaryImg.className = 'card-gallery-primary-img'
-    primaryWrap.appendChild(primaryImg)
-
-    const primaryRole = document.createElement('div')
-    primaryRole.className = 'card-gallery-primary-role'
-    primaryWrap.appendChild(primaryRole)
-
-    // Zoom hint
-    const zoomHint = document.createElement('div')
-    zoomHint.className = 'card-gallery-zoom-hint'
-    zoomHint.textContent = '🔍'
-    primaryWrap.appendChild(zoomHint)
-
-    // Click primary image to open lightbox
-    primaryImg.addEventListener('click', () => openLightbox(primaryImg.src))
-    primaryImg.style.cursor = 'zoom-in'
-
-    gallery.appendChild(primaryWrap)
-
-    const thumbStrip = document.createElement('div')
-    thumbStrip.className = 'card-gallery-thumbs'
-    gallery.appendChild(thumbStrip)
-
-    membersEl.appendChild(gallery)
-
-    // Select a member into the primary slot
+    // Select a member into the primary image
     function selectMember(member) {
       const src = member.hash ? `${API}/img/${member.hash}` : `${API}/tx/${member.txid}`
-      primaryImg.src = src
-      primaryImg.alt = `Upload ${shortHash(member.txid)}`
-      primaryRole.textContent = member.role
-
+      img.src = src
+      img.alt = `Upload ${shortHash(member.txid)}`
       // Update active thumb
-      thumbStrip.querySelectorAll('.card-gallery-thumb').forEach(t => t.classList.remove('active'))
+      thumbStrip.querySelectorAll('.card-thumb').forEach(t => t.classList.remove('active'))
       const activeThumb = thumbStrip.querySelector(`[data-txid="${member.txid}"]`)
       if (activeThumb) activeThumb.classList.add('active')
     }
@@ -683,7 +653,7 @@ async function renderCardPage(txid) {
     // Build thumbnails
     set.members.forEach(member => {
       const thumb = document.createElement('div')
-      thumb.className = 'card-gallery-thumb'
+      thumb.className = 'card-thumb'
       thumb.dataset.txid = member.txid
 
       const thumbImg = document.createElement('img')
@@ -700,7 +670,7 @@ async function renderCardPage(txid) {
       thumb.appendChild(thumbImg)
 
       const thumbRole = document.createElement('div')
-      thumbRole.className = 'card-gallery-thumb-role'
+      thumbRole.className = 'card-thumb-role'
       thumbRole.textContent = member.role
       thumb.appendChild(thumbRole)
 
@@ -713,7 +683,7 @@ async function renderCardPage(txid) {
       selectMember(set.members[0])
     }
   } catch (e) {
-    membersEl.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
+    metaEl.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   }
 }
 
