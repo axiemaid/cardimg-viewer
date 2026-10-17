@@ -601,35 +601,74 @@ async function renderCardPage(txid) {
 
     membersEl.innerHTML = ''
 
+    // Build gallery: primary image + thumbnail strip
+    const gallery = document.createElement('div')
+    gallery.className = 'card-gallery'
+
+    const primaryWrap = document.createElement('div')
+    primaryWrap.className = 'card-gallery-primary'
+
+    const primaryImg = document.createElement('img')
+    primaryImg.className = 'card-gallery-primary-img'
+    primaryWrap.appendChild(primaryImg)
+
+    const primaryRole = document.createElement('div')
+    primaryRole.className = 'card-gallery-primary-role'
+    primaryWrap.appendChild(primaryRole)
+
+    gallery.appendChild(primaryWrap)
+
+    const thumbStrip = document.createElement('div')
+    thumbStrip.className = 'card-gallery-thumbs'
+    gallery.appendChild(thumbStrip)
+
+    membersEl.appendChild(gallery)
+
+    // Select a member into the primary slot
+    function selectMember(member) {
+      const src = member.hash ? `${API}/img/${member.hash}` : `${API}/tx/${member.txid}`
+      primaryImg.src = src
+      primaryImg.alt = `Upload ${shortHash(member.txid)}`
+      primaryRole.textContent = member.role
+
+      // Update active thumb
+      thumbStrip.querySelectorAll('.card-gallery-thumb').forEach(t => t.classList.remove('active'))
+      const activeThumb = thumbStrip.querySelector(`[data-txid="${member.txid}"]`)
+      if (activeThumb) activeThumb.classList.add('active')
+    }
+
+    // Build thumbnails
     set.members.forEach(member => {
-      const memberEl = document.createElement('div')
-      memberEl.className = 'set-member'
+      const thumb = document.createElement('div')
+      thumb.className = 'card-gallery-thumb'
+      thumb.dataset.txid = member.txid
 
-      if (member.hash) {
-        memberEl.innerHTML = `
-          <img src="${API}/thumb/${member.hash}" alt="Upload ${shortHash(member.txid)}" />
-          <div class="set-member-role">${member.role}</div>
-          <div class="set-member-txid">${shortHash(member.txid)}</div>
-        `
-        memberEl.querySelector('img').addEventListener('click', () => navigate(`/cardimg/${member.txid}`))
-      } else {
-        memberEl.innerHTML = `
-          <img src="${API}/thumb/tx/${member.txid}" alt="Upload ${shortHash(member.txid)}" />
-          <div class="set-member-role">${member.role}</div>
-          <div class="set-member-txid">${shortHash(member.txid)}</div>
-        `
-        memberEl.querySelector('img').addEventListener('error', e => {
-          e.target.style.display = 'none'
-          const ph = document.createElement('div')
-          ph.className = 'set-member-placeholder'
-          ph.textContent = 'Not found'
-          memberEl.insertBefore(ph, memberEl.firstChild)
-        })
-        memberEl.querySelector('img').addEventListener('click', () => navigate(`/cardimg/${member.txid}`))
+      const thumbImg = document.createElement('img')
+      thumbImg.alt = `Upload ${shortHash(member.txid)}`
+      const thumbSrc = member.hash ? `${API}/thumb/${member.hash}` : `${API}/thumb/tx/${member.txid}`
+      thumbImg.src = thumbSrc
+      thumbImg.onerror = () => {
+        thumbImg.style.display = 'none'
+        const ph = document.createElement('div')
+        ph.className = 'set-member-placeholder'
+        ph.textContent = 'N/A'
+        thumb.insertBefore(ph, thumb.firstChild)
       }
+      thumb.appendChild(thumbImg)
 
-      membersEl.appendChild(memberEl)
+      const thumbRole = document.createElement('div')
+      thumbRole.className = 'card-gallery-thumb-role'
+      thumbRole.textContent = member.role
+      thumb.appendChild(thumbRole)
+
+      thumb.addEventListener('click', () => selectMember(member))
+      thumbStrip.appendChild(thumb)
     })
+
+    // Load front card (position 0) as default
+    if (set.members.length > 0) {
+      selectMember(set.members[0])
+    }
   } catch (e) {
     membersEl.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   }
