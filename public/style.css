@@ -465,8 +465,8 @@ body {
 
 .card-gallery-zoom-hint {
   position: absolute;
-  bottom: 32px;
-  left: 12px;
+  bottom: 8px;
+  left: 8px;
   background: rgba(0,0,0,0.7);
   backdrop-filter: blur(4px);
   border-radius: 50%;
