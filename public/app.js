@@ -579,8 +579,8 @@ function createSetCard(set) {
 // --- Card Detail Page ---
 
 async function renderCardPage(txid) {
-  const txidEl = document.getElementById('card-detail-txid')
   const membersEl = document.getElementById('card-detail-members')
+  const metaEl = document.getElementById('card-detail-meta')
 
   const h1 = document.querySelector('#card-page .page-header h1')
   const cardCode = cardCodeMappings[txid]
@@ -592,17 +592,47 @@ async function renderCardPage(txid) {
     h1.innerHTML = '<span class="header-protocol">CARDSET</span> <span class="header-txid">' + txid + '</span>'
   }
 
-  txidEl.innerHTML = ''
   membersEl.innerHTML = '<div class="spinner"></div>'
+  metaEl.innerHTML = ''
 
   try {
     const res = await fetch(`${API}/sets/${txid}`)
     if (!res.ok) throw new Error('Card not found')
     const set = await res.json()
 
-    txidEl.innerHTML = `<a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${set.cardsetTxid}</a>`
-
     membersEl.innerHTML = ''
+
+    // Build metadata sidebar
+    const isUnconfirmed = !set.blockHeight
+    let metaHtml = ''
+
+    if (cardCode && ref) {
+      metaHtml += `
+        <h3>Card Code</h3>
+        <p>${cardCode} — ${ref.name}</p>
+        <p style="color:var(--text-dim);font-size:0.8rem">${ref.title}</p>
+      `
+    }
+
+    metaHtml += `
+      <h3>Cardset TxID</h3>
+      <div style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;color:var(--text);word-break:break-all;line-height:1.6">${set.cardsetTxid}</div>
+      <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
+
+      <h3>Status</h3>
+      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Unconfirmed (mempool)</span>' : 'Confirmed'}</p>
+
+      <h3>Members</h3>
+      <p>${set.memberCount} card${set.memberCount !== 1 ? 's' : ''} in this set</p>
+    `
+
+    // List all members with links
+    metaHtml += '<h3>All Members</h3>'
+    set.members.forEach(m => {
+      metaHtml += `<p style="margin-bottom:0.3rem"><a href="/cardimg/${m.txid}" style="color:var(--text-dim)">${m.role}</a> — <span style="font-family:'SF Mono','Fira Code',monospace;font-size:0.72rem;color:var(--text-faint)">${shortHash(m.txid)}</span></p>`
+    })
+
+    metaEl.innerHTML = metaHtml
 
     // Build gallery: primary image + thumbnail strip
     const gallery = document.createElement('div')
