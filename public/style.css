@@ -440,26 +440,22 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card-images img {
-  flex: 1;
   width: 50%;
   height: auto;
-  aspect-ratio: 3/4;
-  object-fit: contain;
+  object-fit: fill;
   min-width: 0;
   display: block;
-  background: var(--bg-elev2);
 }
 
 .set-card-images .set-placeholder {
-  flex: 1;
   width: 50%;
-  aspect-ratio: 3/4;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-faint);
   font-size: 0.8rem;
   background: var(--bg-elev2);
+  aspect-ratio: 3/4;
 }
 
 .set-card-info {
