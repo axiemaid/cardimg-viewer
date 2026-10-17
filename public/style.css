@@ -627,6 +627,7 @@ footer .sep { margin: 0 0.5rem; }
   transition: color 0.15s;
   font-variant-numeric: tabular-nums;
   user-select: none;
+  text-align: center;
 }
 
 .card-code-item:hover {
