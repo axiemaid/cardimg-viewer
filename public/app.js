@@ -182,7 +182,7 @@ async function loadStats() {
 
     if (data.sets) {
       const setsStats = document.getElementById('sets-stats')
-      if (setsStats) setsStats.textContent = `${data.sets.totalSets} cardsets`
+      if (setsStats) setsStats.textContent = ''
     }
   } catch (e) {
     // silent fail
@@ -393,7 +393,7 @@ function renderCardCodeGrid() {
 
   // Update stats
   const statsEl = document.getElementById('card-code-stats')
-  if (statsEl) statsEl.textContent = `${totalSets} cardsets indexed`
+  if (statsEl) statsEl.textContent = `${totalSets} cards`
 
   grid.innerHTML = ''
 
@@ -518,9 +518,7 @@ function renderSetsGrid() {
   // Update sets count
   const setsStats = document.getElementById('sets-stats')
   if (setsStats) {
-    setsStats.textContent = activeCardFilter
-      ? `${filtered.length} cardset${filtered.length !== 1 ? 's' : ''}`
-      : `${filtered.length} cardsets`
+    setsStats.textContent = ''
   }
 }
 
