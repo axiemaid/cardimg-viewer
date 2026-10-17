@@ -538,9 +538,9 @@ function createSetCard(set) {
 
   el.innerHTML = `
     <div class="set-card-images">${thumbSlots}</div>
+    ${cardCode ? `<span class="set-card-code">${cardCode}</span>` : ''}
     <div class="set-card-info">
       <div class="set-card-left">
-        ${cardCode ? `<span class="set-card-code">${cardCode}</span>` : ''}
         <span class="set-card-txid" title="${set.cardsetTxid}">${shortHash(set.cardsetTxid)}</span>
       </div>
       <div class="set-card-members">${set.memberCount} uploads</div>
