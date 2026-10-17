@@ -622,7 +622,7 @@ async function renderCardPage(txid) {
     // Zoom hint
     const zoomHint = document.createElement('div')
     zoomHint.className = 'card-gallery-zoom-hint'
-    zoomHint.textContent = '🔍 Click to zoom'
+    zoomHint.textContent = '🔍'
     primaryWrap.appendChild(zoomHint)
 
     // Click primary image to open lightbox
