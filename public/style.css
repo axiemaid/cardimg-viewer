@@ -444,8 +444,9 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  max-width: 600px;
+  max-width: 450px;
   width: 100%;
+  position: relative;
 }
 
 .card-gallery-primary-img {
@@ -454,6 +455,26 @@ body {
   border-radius: var(--radius);
   background: var(--bg-elev);
   border: 1px solid var(--border);
+  cursor: zoom-in;
+}
+
+.card-gallery-zoom-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card-gallery-primary:hover .card-gallery-zoom-hint {
+  opacity: 1;
 }
 
 .card-gallery-primary-role {

@@ -619,6 +619,12 @@ async function renderCardPage(txid) {
     primaryRole.className = 'card-gallery-primary-role'
     primaryWrap.appendChild(primaryRole)
 
+    // Zoom hint
+    const zoomHint = document.createElement('div')
+    zoomHint.className = 'card-gallery-zoom-hint'
+    zoomHint.textContent = '🔍 Click to zoom'
+    primaryWrap.appendChild(zoomHint)
+
     // Click primary image to open lightbox
     primaryImg.addEventListener('click', () => openLightbox(primaryImg.src))
     primaryImg.style.cursor = 'zoom-in'
