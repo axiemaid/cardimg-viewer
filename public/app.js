@@ -746,15 +746,15 @@ function initLightbox() {
     if (lb.style.display === 'none') return
     e.preventDefault()
     const delta = e.deltaY > 0 ? 0.9 : 1.1
+    const oldScale = lbScale
     lbScale = Math.min(Math.max(lbScale * delta, 0.5), 8)
-    // Zoom toward cursor
-    if (delta > 1) {
-      const rect = lb.getBoundingClientRect()
-      const cx = e.clientX - rect.width / 2 - lbX
-      const cy = e.clientY - rect.height / 2 - lbY
-      lbX -= cx * (delta - 1)
-      lbY -= cy * (delta - 1)
-    }
+    // Zoom toward cursor (both directions)
+    const rect = lb.getBoundingClientRect()
+    const cx = e.clientX - rect.width / 2 - lbX
+    const cy = e.clientY - rect.height / 2 - lbY
+    const ratio = lbScale / oldScale
+    lbX = e.clientX - rect.width / 2 - cx * ratio
+    lbY = e.clientY - rect.height / 2 - cy * ratio
     updateLightboxTransform()
   }, { passive: false })
 
