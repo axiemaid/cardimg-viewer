@@ -439,23 +439,26 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev2);
 }
 
-.set-card-images img {
+.set-thumb-slot {
   width: 50%;
-  height: auto;
-  object-fit: fill;
   min-width: 0;
+}
+
+.set-card-images img {
+  width: 100%;
+  height: auto;
   display: block;
 }
 
 .set-card-images .set-placeholder {
-  width: 50%;
+  width: 100%;
+  aspect-ratio: 3/4;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-faint);
   font-size: 0.8rem;
   background: var(--bg-elev2);
-  aspect-ratio: 3/4;
 }
 
 .set-card-info {
