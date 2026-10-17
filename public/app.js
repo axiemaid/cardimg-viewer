@@ -530,7 +530,7 @@ function createSetCard(set) {
   const isUnconfirmed = !set.blockHeight
   const cardCode = getCardCodeForSet(set)
 
-  const thumbSlots = set.txids.slice(0, 4).map(txid => {
+  const thumbSlots = set.txids.slice(0, 2).map(txid => {
     return `<div class="set-thumb-slot" data-txid="${txid}"><div class="set-placeholder">…</div></div>`
   }).join('')
 

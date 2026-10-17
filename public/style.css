@@ -437,18 +437,22 @@ footer .sep { margin: 0 0.5rem; }
   display: flex;
   gap: 0;
   background: var(--bg-elev2);
-  height: 180px;
 }
 
 .set-card-images img {
   flex: 1;
-  height: 100%;
+  width: 50%;
+  height: auto;
+  aspect-ratio: 3/4;
   object-fit: cover;
   min-width: 0;
+  display: block;
 }
 
 .set-card-images .set-placeholder {
   flex: 1;
+  width: 50%;
+  aspect-ratio: 3/4;
   display: flex;
   align-items: center;
   justify-content: center;
