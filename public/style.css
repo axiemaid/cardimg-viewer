@@ -614,7 +614,7 @@ footer .sep { margin: 0 0.5rem; }
 
 .card-code-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.25rem 0;
   margin-bottom: 0.5rem;
 }
