@@ -70,13 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadCardReference() {
   try {
-    const res = await fetch('/card-reference.json')
+    const res = await fetch(`${API}/card-reference`)
     cardReference = await res.json()
   } catch (e) {
     console.error('Failed to load card reference:', e)
   }
   try {
-    const res = await fetch('/card-codes.json')
+    const res = await fetch(`${API}/card-codes`)
     const data = await res.json()
     cardCodeMappings = data.mappings || {}
   } catch (e) {
