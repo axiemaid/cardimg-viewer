@@ -60,6 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
+  // Lightbox close handlers
+  document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target.id === 'lightbox' || e.target.id === 'lightbox-close') closeLightbox()
+  })
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox()
+  })
+
   // Initial route
   loadCardReference()
   loadStats()
@@ -616,6 +624,10 @@ async function renderCardPage(txid) {
     primaryRole.className = 'card-gallery-primary-role'
     primaryWrap.appendChild(primaryRole)
 
+    // Click primary image to open lightbox
+    primaryImg.addEventListener('click', () => openLightbox(primaryImg.src))
+    primaryImg.style.cursor = 'zoom-in'
+
     gallery.appendChild(primaryWrap)
 
     const thumbStrip = document.createElement('div')
@@ -672,6 +684,23 @@ async function renderCardPage(txid) {
   } catch (e) {
     membersEl.innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   }
+}
+
+// --- Lightbox ---
+
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox')
+  const img = document.getElementById('lightbox-img')
+  img.src = src
+  lb.style.display = 'flex'
+  document.body.style.overflow = 'hidden'
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox')
+  lb.style.display = 'none'
+  document.getElementById('lightbox-img').src = ''
+  document.body.style.overflow = ''
 }
 
 // --- Utils ---
