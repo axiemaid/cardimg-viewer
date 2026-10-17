@@ -598,9 +598,11 @@ async function renderCardPage(txid) {
   metaEl.innerHTML = '<div class="spinner"></div>'
   thumbStrip.innerHTML = ''
 
-  // Click primary image to open lightbox
+  // Click primary image to open lightbox (full-res)
   img.addEventListener('click', () => {
-    if (img.src) openLightbox(img.src)
+    if (!currentMember) return
+    const fullSrc = currentMember.hash ? `${API}/img/${currentMember.hash}` : `${API}/tx/${currentMember.txid}`
+    openLightbox(fullSrc)
   })
 
   try {
@@ -640,8 +642,12 @@ async function renderCardPage(txid) {
     metaEl.innerHTML = metaHtml
 
     // Select a member into the primary image
+    // Track current member for lightbox full-res
+    let currentMember = null
+
     function selectMember(member) {
-      const src = member.hash ? `${API}/img/${member.hash}` : `${API}/tx/${member.txid}`
+      currentMember = member
+      const src = member.hash ? `${API}/thumb/${member.hash}` : `${API}/thumb/tx/${member.txid}`
       img.src = src
       img.alt = `Upload ${shortHash(member.txid)}`
       // Update active thumb
