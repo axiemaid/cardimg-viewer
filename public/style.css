@@ -444,9 +444,10 @@ footer .sep { margin: 0 0.5rem; }
   width: 50%;
   height: auto;
   aspect-ratio: 3/4;
-  object-fit: cover;
+  object-fit: contain;
   min-width: 0;
   display: block;
+  background: var(--bg-elev2);
 }
 
 .set-card-images .set-placeholder {
