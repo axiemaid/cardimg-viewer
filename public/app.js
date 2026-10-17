@@ -60,13 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // Lightbox close handlers
-  document.getElementById('lightbox').addEventListener('click', e => {
-    if (e.target.id === 'lightbox' || e.target.id === 'lightbox-close') closeLightbox()
-  })
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeLightbox()
-  })
+  // Lightbox interactions
+  initLightbox()
 
   // Initial route
   loadCardReference()
@@ -688,12 +683,23 @@ async function renderCardPage(txid) {
 
 // --- Lightbox ---
 
+let lbScale = 1
+let lbX = 0
+let lbY = 0
+let lbDragging = false
+let lbLastX = 0
+let lbLastY = 0
+
 function openLightbox(src) {
   const lb = document.getElementById('lightbox')
   const img = document.getElementById('lightbox-img')
   img.src = src
   lb.style.display = 'flex'
   document.body.style.overflow = 'hidden'
+  lbScale = 1
+  lbX = 0
+  lbY = 0
+  updateLightboxTransform()
 }
 
 function closeLightbox() {
@@ -701,6 +707,118 @@ function closeLightbox() {
   lb.style.display = 'none'
   document.getElementById('lightbox-img').src = ''
   document.body.style.overflow = ''
+}
+
+function updateLightboxTransform() {
+  const img = document.getElementById('lightbox-img')
+  img.style.transform = `translate(${lbX}px, ${lbY}px) scale(${lbScale})`
+}
+
+// Init lightbox interactions
+function initLightbox() {
+  const lb = document.getElementById('lightbox')
+  const img = document.getElementById('lightbox-img')
+
+  // Close on background click
+  lb.addEventListener('click', e => {
+    if (e.target === lb || e.target.id === 'lightbox-close') closeLightbox()
+  })
+
+  // ESC to close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox()
+  })
+
+  // Wheel to zoom
+  lb.addEventListener('wheel', e => {
+    if (lb.style.display === 'none') return
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.9 : 1.1
+    lbScale = Math.min(Math.max(lbScale * delta, 0.5), 8)
+    // Zoom toward cursor
+    if (delta > 1) {
+      const rect = lb.getBoundingClientRect()
+      const cx = e.clientX - rect.width / 2 - lbX
+      const cy = e.clientY - rect.height / 2 - lbY
+      lbX -= cx * (delta - 1)
+      lbY -= cy * (delta - 1)
+    }
+    updateLightboxTransform()
+  }, { passive: false })
+
+  // Double-click to reset
+  img.addEventListener('dblclick', e => {
+    e.stopPropagation()
+    lbScale = 1
+    lbX = 0
+    lbY = 0
+    updateLightboxTransform()
+  })
+
+  // Drag to pan
+  img.addEventListener('mousedown', e => {
+    e.preventDefault()
+    lbDragging = true
+    lbLastX = e.clientX
+    lbLastY = e.clientY
+    img.style.cursor = 'grabbing'
+  })
+
+  document.addEventListener('mousemove', e => {
+    if (!lbDragging) return
+    lbX += e.clientX - lbLastX
+    lbY += e.clientY - lbLastY
+    lbLastX = e.clientX
+    lbLastY = e.clientY
+    updateLightboxTransform()
+  })
+
+  document.addEventListener('mouseup', () => {
+    if (lbDragging) {
+      lbDragging = false
+      img.style.cursor = 'grab'
+    }
+  })
+
+  // Touch: pinch to zoom + drag to pan
+  let touchDist = 0
+  let touchStartScale = 1
+
+  lb.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      lbDragging = true
+      lbLastX = e.touches[0].clientX
+      lbLastY = e.touches[0].clientY
+    } else if (e.touches.length === 2) {
+      lbDragging = false
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      touchDist = Math.sqrt(dx * dx + dy * dy)
+      touchStartScale = lbScale
+    }
+  }, { passive: true })
+
+  lb.addEventListener('touchmove', e => {
+    if (lb.style.display === 'none') return
+    e.preventDefault()
+    if (e.touches.length === 1 && lbDragging) {
+      lbX += e.touches[0].clientX - lbLastX
+      lbY += e.touches[0].clientY - lbLastY
+      lbLastX = e.touches[0].clientX
+      lbLastY = e.touches[0].clientY
+      updateLightboxTransform()
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      lbScale = Math.min(Math.max(touchStartScale * (dist / touchDist), 0.5), 8)
+      updateLightboxTransform()
+    }
+  }, { passive: false })
+
+  lb.addEventListener('touchend', () => {
+    lbDragging = false
+  }, { passive: true })
 }
 
 // --- Utils ---
