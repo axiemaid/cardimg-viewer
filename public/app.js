@@ -1,12 +1,12 @@
 /* CARDIMG Viewer — Client logic with routing + card code directory */
 
-const API = window.CARDIMG_API || 'http://localhost:3014'
+const API = window.CARDIMG_API != null ? window.CARDIMG_API : 'http://localhost:3014'
 let allCards = []
 let allSets = []
 let cardReference = []      // 42 card codes from card-reference.json
 let cardCodeMappings = {}   // { cardsetTxid → cardCode } from card-codes.json
 let activeCardFilter = null // null = show all, or 'C01' etc.
-let activeTab = 'uploads'
+let activeTab = 'cards'
 
 // --- Init ---
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab
-      navigate(tab === 'uploads' ? '/' : '/cards')
+      navigate(tab === 'cards' ? '/' : '/uploads')
     })
   })
 
@@ -112,14 +112,14 @@ function handleRoute() {
     return
   }
 
-  // /cards — cards tab
-  if (path === '/cards') {
-    showGallery('cards')
+  // /uploads — uploads tab
+  if (path === '/uploads') {
+    showGallery('uploads')
     return
   }
 
-  // / — uploads tab (default)
-  showGallery('uploads')
+  // / — cards tab (default)
+  showGallery('cards')
 }
 
 function navigate(path) {
@@ -212,7 +212,15 @@ async function loadCards(isRefresh) {
       return (b.blockHeight || 0) - (a.blockHeight || 0)
     })
 
-    allCards = cards
+    // Deduplicate by hash — same image uploaded multiple times = show once
+    const seen = new Set()
+    const deduped = cards.filter(c => {
+      if (seen.has(c.hash)) return false
+      seen.add(c.hash)
+      return true
+    })
+
+    allCards = deduped
 
     loading.style.display = 'none'
 
