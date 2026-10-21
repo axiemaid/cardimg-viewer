@@ -721,7 +721,7 @@ footer .sep { margin: 0 0.5rem; }
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.25rem 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 }
 
 .card-code-item {
@@ -773,9 +773,9 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .cardsets-feed-section .page-header {
-  padding-top: 0.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--border);
-  margin-top: 0.5rem;
+  margin-top: 0;
 }
 
 /* --- Set Card Code Badge --- */
