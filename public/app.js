@@ -43,8 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
       updateCardsetsFeedTitle()
       renderCardCodeGrid()
       renderSetsGrid()
-      // Scroll down to feed
-      document.getElementById('cardsets-feed').scrollIntoView({ behavior: 'smooth', block: 'start' })
     } else if (backLink) {
       e.preventDefault()
       window.history.back()
