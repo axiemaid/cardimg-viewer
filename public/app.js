@@ -40,8 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (codeChip) {
       e.preventDefault()
       const code = codeChip.dataset.code
-      // Toggle off if clicking same
-      if (activeCardFilter === code) {
+      if (code === 'ALL') {
+        activeCardFilter = null
+      } else if (activeCardFilter === code) {
         activeCardFilter = null
       } else {
         activeCardFilter = code
@@ -407,6 +408,14 @@ function renderCardCodeGrid() {
   if (statsEl) statsEl.textContent = `${totalSets} cards`
 
   grid.innerHTML = ''
+
+  // "All" option
+  const allIsActive = activeCardFilter === null
+  const allItem = document.createElement('div')
+  allItem.className = `card-code-item ${allIsActive ? 'active' : ''}`
+  allItem.dataset.code = 'ALL'
+  allItem.textContent = `All (${totalSets})`
+  grid.appendChild(allItem)
 
   // Render all 42 reference codes
   cardReference.forEach(card => {
