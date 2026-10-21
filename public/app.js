@@ -396,10 +396,6 @@ function renderCardCodeGrid() {
   const { counts, uncategorized } = buildCodeCounts()
   const totalSets = allSets.length
 
-  // Update stats
-  const statsEl = document.getElementById('card-code-stats')
-  if (statsEl) statsEl.textContent = `${totalSets} cards`
-
   grid.innerHTML = ''
 
   // "All" option
