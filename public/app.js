@@ -258,7 +258,7 @@ function createCardElement(card, index) {
     </div>
     <div class="card-info">
       <div class="card-txid" title="${card.txid}">${shortHash(card.txid)}</div>
-      <div class="card-size">${formatBytes(card.size)}</div>
+  
     </div>
   `
 
