@@ -771,12 +771,7 @@ footer .sep { margin: 0 0.5rem; }
 .cardsets-feed-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.cardsets-feed-section .page-header {
-  padding-top: 1.5rem;
-  margin-top: 0;
+  padding: 1.5rem 1.5rem 1.5rem;
 }
 
 /* --- Set Card Code Badge --- */
