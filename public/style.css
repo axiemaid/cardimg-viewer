@@ -530,18 +530,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card:hover {
-  background: #101012;
-}
-
-.set-card:hover .set-card-images,
-.set-card:hover .set-card-info {
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.set-card .set-card-images,
-.set-card .set-card-info {
-  transition: opacity 0.2s ease;
+  opacity: 0.85;
 }
 
 .set-card-images {
