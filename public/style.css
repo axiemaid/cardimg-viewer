@@ -716,7 +716,7 @@ footer .sep { margin: 0 0.5rem; }
 .card-code-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 1.5rem 1.5rem 0;
 }
 
 .card-code-grid {
