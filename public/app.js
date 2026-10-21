@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewLink = e.target.closest('.cardset-view-link')
     const codeChip = e.target.closest('.card-code-item')
 
+    if (codeChip) {
       e.preventDefault()
       const code = codeChip.dataset.code
       if (code === 'ALL') {
