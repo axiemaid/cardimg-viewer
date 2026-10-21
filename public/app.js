@@ -431,19 +431,7 @@ function renderCardCodeGrid() {
 }
 
 function updateCardsetsFeedTitle() {
-  const titleEl = document.getElementById('cardsets-feed-title')
-  const clearBtn = document.getElementById('clear-filter-btn')
-  if (clearBtn) clearBtn.style.display = 'none'
-  if (activeCardFilter) {
-    if (activeCardFilter === 'UNCATEGORIZED') {
-      titleEl.textContent = 'Uncategorized Cardsets'
-    } else {
-      const ref = cardReference.find(c => c.code === activeCardFilter)
-      titleEl.textContent = ref ? `${activeCardFilter} — ${ref.name}` : activeCardFilter
-    }
-  } else {
-    titleEl.textContent = 'Newest Cards'
-  }
+  // Header removed — no-op, kept for compatibility
 }
 
 // --- Cards Gallery: Cardsets Feed ---
