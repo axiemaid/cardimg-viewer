@@ -524,12 +524,8 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .set-card:hover {
@@ -539,7 +535,6 @@ footer .sep { margin: 0 0.5rem; }
 .set-card-images {
   display: flex;
   gap: 0;
-  background: var(--bg-elev2);
 }
 
 .set-thumb-slot {
@@ -565,9 +560,8 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card-info {
-  padding: 0.6rem 0.75rem;
+  padding: 0.4rem 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 

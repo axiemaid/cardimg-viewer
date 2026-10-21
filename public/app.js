@@ -537,7 +537,6 @@ function createSetCard(set) {
       <div class="set-card-left">
         <span class="set-card-txid" title="${set.cardsetTxid}">${shortHash(set.cardsetTxid)}</span>
       </div>
-      <div class="set-card-members">${set.memberCount} uploads</div>
     </div>
     ${isUnconfirmed ? '<span class="set-card-badge" style="color:#fbbf24">unconfirmed</span>' : ''}
   `
