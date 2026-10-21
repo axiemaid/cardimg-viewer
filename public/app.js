@@ -29,15 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const backLink = e.target.closest('.back-link')
     const viewLink = e.target.closest('.cardset-view-link')
     const codeChip = e.target.closest('.card-code-item')
-    const clearFilter = e.target.closest('#clear-filter-btn')
 
-    if (clearFilter) {
-      e.preventDefault()
-      activeCardFilter = null
-      updateCardsetsFeedTitle()
-      renderSetsGrid()
-      renderCardCodeGrid()
-    } else if (codeChip) {
       e.preventDefault()
       const code = codeChip.dataset.code
       if (code === 'ALL') {
@@ -444,6 +436,7 @@ function renderCardCodeGrid() {
 function updateCardsetsFeedTitle() {
   const titleEl = document.getElementById('cardsets-feed-title')
   const clearBtn = document.getElementById('clear-filter-btn')
+  if (clearBtn) clearBtn.style.display = 'none'
   if (activeCardFilter) {
     if (activeCardFilter === 'UNCATEGORIZED') {
       titleEl.textContent = 'Uncategorized Cardsets'
@@ -451,10 +444,8 @@ function updateCardsetsFeedTitle() {
       const ref = cardReference.find(c => c.code === activeCardFilter)
       titleEl.textContent = ref ? `${activeCardFilter} — ${ref.name}` : activeCardFilter
     }
-    if (clearBtn) clearBtn.style.display = ''
   } else {
     titleEl.textContent = 'Newest Cards'
-    if (clearBtn) clearBtn.style.display = 'none'
   }
 }
 
