@@ -871,7 +871,9 @@ footer .sep { margin: 0 0.5rem; }
   .card-info { padding: 0.3rem 0.15rem; }
   .card-txid, .card-size { font-size: 0.6rem; }
   .card-code-grid { grid-template-columns: repeat(3, 1fr); }
-  .sets-grid { grid-template-columns: 1fr; padding: 1rem; }
+  .sets-grid { grid-template-columns: 1fr; padding: 0.5rem 0; }
+  .card-code-section { padding: 1.5rem 0.75rem 0; }
+  .cardsets-feed-section { padding: 1.5rem 0.75rem; }
   .set-member { width: 120px; }
 }
 
