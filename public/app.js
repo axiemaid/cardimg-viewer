@@ -444,7 +444,7 @@ function updateCardsetsFeedTitle() {
     }
     if (clearBtn) clearBtn.style.display = ''
   } else {
-    titleEl.textContent = 'Newest Cardsets'
+    titleEl.textContent = 'Newest Cards'
     if (clearBtn) clearBtn.style.display = 'none'
   }
 }
