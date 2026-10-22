@@ -485,7 +485,6 @@ footer .sep { margin: 0 0.5rem; }
   user-select: none;
   -webkit-user-select: none;
   pointer-events: auto;
-  will-change: transform;
 }
 
 #viewer-loading {

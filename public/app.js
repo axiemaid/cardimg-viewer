@@ -585,13 +585,7 @@ async function renderCardimgViewer(txid) {
     const fullImg = new Image()
     fullImg.onload = () => {
       document.getElementById('viewer-loading').style.display = 'none'
-      if (vzDragging) {
-        const swap = () => { img.src = fullUrl }
-        document.addEventListener('mouseup', swap, { once: true })
-        document.addEventListener('touchend', swap, { once: true })
-      } else {
-        img.src = fullUrl
-      }
+      img.src = fullUrl
     }
     fullImg.onerror = () => {
       document.getElementById('viewer-loading').style.display = 'none'
@@ -695,14 +689,8 @@ function selectViewerMember(index) {
   img.src = thumbUrl
   const fullImg = new Image()
   fullImg.onload = () => {
-    // Don't swap mid-drag — wait until panning stops
-    if (vzDragging) {
-      const swap = () => { img.src = fullUrl }
-      document.addEventListener('mouseup', swap, { once: true })
-      document.addEventListener('touchend', swap, { once: true })
-    } else {
-      img.src = fullUrl
-    }
+    // Swap src directly — will-change:transform handles repaint
+    img.src = fullUrl
   }
   fullImg.src = fullUrl
 
