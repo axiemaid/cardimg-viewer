@@ -812,19 +812,23 @@ function initViewerPanZoom() {
   }, { passive: true })
 
   wrap.addEventListener('touchmove', e => {
-    if (vzScale <= 1) return
-    e.preventDefault()
-    if (e.touches.length === 1 && vzDragging) {
-      vzX += e.touches[0].clientX - vzLastX
-      vzY += e.touches[0].clientY - vzLastY
-      vzLastX = e.touches[0].clientX
-      vzLastY = e.touches[0].clientY
-      updateViewerTransform()
-    } else if (e.touches.length === 2) {
+    if (e.touches.length === 2) {
+      // Pinch to zoom — works from any scale including 1
+      e.preventDefault()
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
       const dist = Math.sqrt(dx * dx + dy * dy)
       vzScale = Math.min(Math.max(vzTouchStartScale * (dist / vzTouchDist), 1), 8)
+      updateViewerTransform()
+    } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - vzLastX
+      const dy = e.touches[0].clientY - vzLastY
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) vzDidDrag = true
+      vzX += dx
+      vzY += dy
+      vzLastX = e.touches[0].clientX
+      vzLastY = e.touches[0].clientY
       updateViewerTransform()
     }
   }, { passive: false })
