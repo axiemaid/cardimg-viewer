@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Viewer: image click → toggle zoom
   document.getElementById('viewer-image').addEventListener('click', toggleZoom)
+  initViewerPanZoom()
 
   // Viewer: keyboard navigation
   document.addEventListener('keydown', e => {
@@ -674,6 +675,7 @@ function selectViewerMember(index) {
   document.querySelectorAll('.viewer-thumb').forEach((t, i) => {
     t.classList.toggle('active', i === viewerMemberIndex)
   })
+  resetViewerZoom()
 }
 
 function cycleMember(direction) {
@@ -683,18 +685,135 @@ function cycleMember(direction) {
   selectViewerMember(newIndex)
 }
 
-// Zoom state
-let vZoomed = false
+// Pan/zoom state
+let vzScale = 1
+let vzX = 0
+let vzY = 0
+let vzDragging = false
+let vzLastX = 0
+let vzLastY = 0
+let vzTouchDist = 0
+let vzTouchStartScale = 1
 
 function toggleZoom() {
-  const img = document.getElementById('viewer-image')
-  if (vZoomed) {
-    img.classList.remove('zoomed')
-    vZoomed = false
+  if (vzScale > 1) {
+    vzScale = 1
+    vzX = 0
+    vzY = 0
+    updateViewerTransform()
   } else {
-    img.classList.add('zoomed')
-    vZoomed = true
+    vzScale = 2
+    updateViewerTransform()
   }
+}
+
+function updateViewerTransform() {
+  const img = document.getElementById('viewer-image')
+  img.style.transform = `translate(${vzX}px, ${vzY}px) scale(${vzScale})`
+  img.style.cursor = vzScale > 1 ? (vzDragging ? 'grabbing' : 'grab') : 'zoom-in'
+}
+
+function initViewerPanZoom() {
+  const wrap = document.getElementById('viewer-image-wrap')
+  const img = document.getElementById('viewer-image')
+
+  // Wheel to zoom
+  wrap.addEventListener('wheel', e => {
+    if (vzScale === 1 && e.deltaY > 0) return
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.9 : 1.1
+    const oldScale = vzScale
+    vzScale = Math.min(Math.max(vzScale * delta, 1), 8)
+    // Zoom toward cursor
+    const rect = wrap.getBoundingClientRect()
+    const cx = e.clientX - rect.width / 2 - vzX
+    const cy = e.clientY - rect.height / 2 - vzY
+    const ratio = vzScale / oldScale
+    vzX = e.clientX - rect.width / 2 - cx * ratio
+    vzY = e.clientY - rect.height / 2 - cy * ratio
+    updateViewerTransform()
+  }, { passive: false })
+
+  // Double-click to reset
+  img.addEventListener('dblclick', e => {
+    e.stopPropagation()
+    vzScale = 1
+    vzX = 0
+    vzY = 0
+    updateViewerTransform()
+  })
+
+  // Drag to pan (only when zoomed in)
+  img.addEventListener('mousedown', e => {
+    if (vzScale <= 1) return
+    e.preventDefault()
+    vzDragging = true
+    vzLastX = e.clientX
+    vzLastY = e.clientY
+    img.style.cursor = 'grabbing'
+  })
+
+  document.addEventListener('mousemove', e => {
+    if (!vzDragging) return
+    vzX += e.clientX - vzLastX
+    vzY += e.clientY - vzLastY
+    vzLastX = e.clientX
+    vzLastY = e.clientY
+    updateViewerTransform()
+  })
+
+  document.addEventListener('mouseup', () => {
+    if (vzDragging) {
+      vzDragging = false
+      img.style.cursor = vzScale > 1 ? 'grab' : 'zoom-in'
+    }
+  })
+
+  // Touch: pinch to zoom + drag to pan
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 1 && vzScale > 1) {
+      vzDragging = true
+      vzLastX = e.touches[0].clientX
+      vzLastY = e.touches[0].clientY
+    } else if (e.touches.length === 2) {
+      vzDragging = false
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      vzTouchDist = Math.sqrt(dx * dx + dy * dy)
+      vzTouchStartScale = vzScale
+    }
+  }, { passive: true })
+
+  wrap.addEventListener('touchmove', e => {
+    if (vzScale <= 1) return
+    e.preventDefault()
+    if (e.touches.length === 1 && vzDragging) {
+      vzX += e.touches[0].clientX - vzLastX
+      vzY += e.touches[0].clientY - vzLastY
+      vzLastX = e.touches[0].clientX
+      vzLastY = e.touches[0].clientY
+      updateViewerTransform()
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      vzScale = Math.min(Math.max(vzTouchStartScale * (dist / vzTouchDist), 1), 8)
+      updateViewerTransform()
+    }
+  }, { passive: false })
+
+  wrap.addEventListener('touchend', () => {
+    vzDragging = false
+    img.style.cursor = vzScale > 1 ? 'grab' : 'zoom-in'
+  }, { passive: true })
+}
+
+// Reset pan/zoom when switching members
+function resetViewerZoom() {
+  vzScale = 1
+  vzX = 0
+  vzY = 0
+  updateViewerTransform()
 }
 
 // --- Utils ---

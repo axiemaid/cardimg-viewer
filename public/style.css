@@ -480,17 +480,11 @@ footer .sep { margin: 0 0.5rem; }
   max-height: 100%;
   object-fit: contain;
   cursor: zoom-in;
-  transition: transform 0.2s ease;
+  transform-origin: center center;
+  transition: transform 0.05s ease-out;
   user-select: none;
   -webkit-user-select: none;
-}
-
-#viewer-image.zoomed {
-  max-width: none;
-  max-height: none;
-  object-fit: unset;
-  cursor: zoom-out;
-  transform: scale(2);
+  pointer-events: auto;
 }
 
 #viewer-loading {
