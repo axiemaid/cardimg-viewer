@@ -577,17 +577,28 @@ async function renderCardimgViewer(txid) {
     }
   }
 
-  // Set image
   const img = document.getElementById('viewer-image')
   if (card) {
-    img.src = `${API}/img/${card.hash}`
+    const thumbUrl = `${API}/thumb/${card.hash}`
+    const fullUrl = `${API}/img/${card.hash}`
+    img.src = thumbUrl
+    const fullImg = new Image()
+    fullImg.onload = () => {
+      img.src = fullUrl
+      document.getElementById('viewer-loading').style.display = 'none'
+    }
+    fullImg.onerror = () => {
+      document.getElementById('viewer-loading').style.display = 'none'
+      document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+    }
+    fullImg.src = fullUrl
   } else {
     img.src = `${API}/tx/${txid}`
-  }
-  img.onload = () => { document.getElementById('viewer-loading').style.display = 'none' }
-  img.onerror = () => {
-    document.getElementById('viewer-loading').style.display = 'none'
-    document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+    img.onload = () => { document.getElementById('viewer-loading').style.display = 'none' }
+    img.onerror = () => {
+      document.getElementById('viewer-loading').style.display = 'none'
+      document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+    }
   }
 
   // Build metadata
@@ -671,7 +682,15 @@ function selectViewerMember(index) {
   const member = viewerMembers[viewerMemberIndex]
 
   const img = document.getElementById('viewer-image')
-  img.src = member.hash ? `${API}/img/${member.hash}` : `${API}/tx/${member.txid}`
+  const thumbUrl = member.hash ? `${API}/thumb/${member.hash}` : `${API}/thumb/tx/${member.txid}`
+  const fullUrl = member.hash ? `${API}/img/${member.hash}` : `${API}/tx/${member.txid}`
+
+  // Load thumbnail first for instant display, then swap to full-res
+  img.src = thumbUrl
+  const fullImg = new Image()
+  fullImg.onload = () => { img.src = fullUrl }
+  fullImg.src = fullUrl
+
   img.alt = `Upload ${shortHash(member.txid)}`
 
   // Update active thumb
