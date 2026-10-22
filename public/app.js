@@ -734,8 +734,11 @@ function toggleZoom() {
 }
 function updateViewerTransform() {
   const img = document.getElementById('viewer-image')
+  const wrap = document.getElementById('viewer-image-wrap')
   img.style.transform = `translate(${vzX}px, ${vzY}px) scale(${vzScale})`
   img.style.cursor = vzScale > 1 ? (vzDragging ? 'grabbing' : 'grab') : 'zoom-in'
+  // Allow page scroll at scale=1, capture all touches when zoomed
+  wrap.style.touchAction = vzScale > 1 ? 'none' : 'pan-y'
 }
 
 function initViewerPanZoom() {
