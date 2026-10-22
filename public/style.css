@@ -450,26 +450,6 @@ footer .sep { margin: 0 0.5rem; }
   color: var(--text-dim);
 }
 
-#viewer-info-btn {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 1.1rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-#viewer-info-btn:hover {
-  color: var(--text);
-  border-color: var(--accent);
-}
-
 /* Main image area */
 
 #viewer-main {
@@ -613,57 +593,43 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev2);
 }
 
-/* Slide-in metadata panel */
+/* Metadata below thumbnails */
 
-#viewer-meta-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 380px;
-  max-width: 90vw;
-  height: 100%;
+#viewer-meta {
+  flex-shrink: 0;
   background: var(--bg-elev);
-  border-left: 1px solid var(--border);
-  transform: translateX(100%);
-  transition: transform 0.25s ease;
-  z-index: 20;
+  border-top: 1px solid var(--border);
+  padding: 1rem 1.5rem 1.5rem;
+  max-height: 35vh;
   overflow-y: auto;
-  pointer-events: none;
 }
 
-#viewer-meta-panel.open {
-  transform: translateX(0);
-  pointer-events: auto;
-}
-
-#viewer-meta-content {
-  padding: 3.5rem 1.5rem 1.5rem;
-}
-
-#viewer-meta-content h3 {
+#viewer-meta h3 {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-faint);
   margin-bottom: 0.35rem;
-  margin-top: 1.25rem;
+  margin-top: 1rem;
 }
 
-#viewer-meta-content h3:first-child { margin-top: 0; }
+#viewer-meta h3:first-child { margin-top: 0; }
 
-#viewer-meta-content p,
-#viewer-meta-content a {
-  font-size: 0.88rem;
+#viewer-meta p,
+#viewer-meta a {
+  font-size: 0.85rem;
   word-break: break-all;
   line-height: 1.5;
 }
 
-#viewer-meta-content a {
+#viewer-meta a {
   color: var(--accent);
   text-decoration: none;
 }
 
-#viewer-meta-content a:hover { color: var(--accent-hover); }
+#viewer-meta a:hover { color: var(--accent-hover); }
+
+
 
 .meta-value {
   font-family: 'SF Mono', 'Fira Code', monospace;
@@ -706,7 +672,7 @@ footer .sep { margin: 0 0.5rem; }
   .sets-grid { grid-template-columns: 1fr; padding: 0.5rem 0; }
   .card-code-section { padding: 1.5rem 0.75rem 0; }
   .cardsets-feed-section { padding: 1.5rem 0.75rem; }
-  #viewer-meta-panel { width: 100vw; }
+
   #viewer-main { padding-top: 3rem; }
   .viewer-thumb { width: 60px; }
 }

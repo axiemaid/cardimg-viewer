@@ -14,7 +14,7 @@ let viewerMembers = []    // For cardset: array of { txid, hash, role }
 let viewerMemberIndex = 0  // Currently selected member
 let viewerCardCode = null
 let viewerCardRef = null
-let metaPanelOpen = false
+
 
 // --- Init ---
 
@@ -62,12 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // Viewer: info toggle
-  document.getElementById('viewer-info-btn').addEventListener('click', () => {
-    metaPanelOpen = !metaPanelOpen
-    document.getElementById('viewer-meta-panel').classList.toggle('open', metaPanelOpen)
-  })
-
   // Viewer: image click → toggle zoom
   document.getElementById('viewer-image').addEventListener('click', toggleZoom)
 
@@ -75,18 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', e => {
     if (document.getElementById('viewer-page').style.display === 'none') return
     if (e.key === 'Escape') {
-      if (metaPanelOpen) {
-        metaPanelOpen = false
-        document.getElementById('viewer-meta-panel').classList.remove('open')
-      } else {
-        window.history.back()
-      }
+      window.history.back()
     } else if (e.key === 'ArrowLeft') {
       cycleMember(-1)
     } else if (e.key === 'ArrowRight') {
       cycleMember(1)
-    } else if (e.key === 'i') {
-      document.getElementById('viewer-info-btn').click()
     }
   })
 
@@ -474,10 +461,8 @@ function showViewer(txid, context) {
   viewerMemberIndex = 0
   viewerCardCode = null
   viewerCardRef = null
-  metaPanelOpen = false
-  document.getElementById('viewer-meta-panel').classList.remove('open')
   document.getElementById('viewer-bottom').innerHTML = ''
-  document.getElementById('viewer-meta-content').innerHTML = '<div class="spinner"></div>'
+  document.getElementById('viewer-meta').innerHTML = '<div class="spinner"></div>'
   document.getElementById('viewer-image').src = ''
   document.getElementById('viewer-loading').style.display = 'flex'
 
@@ -558,11 +543,11 @@ async function renderCardsetViewer(txid) {
     set.members.forEach(m => {
       metaHtml += `<p style="margin-bottom:0.3rem"><a href="/cardimg/${m.txid}" style="color:var(--text-dim)">${m.role}</a> — <span style="font-family:'SF Mono','Fira Code',monospace;font-size:0.72rem;color:var(--text-faint)">${shortHash(m.txid)}</span></p>`
     })
-    document.getElementById('viewer-meta-content').innerHTML = metaHtml
+    document.getElementById('viewer-meta').innerHTML = metaHtml
 
   } catch (e) {
     document.getElementById('viewer-loading').style.display = 'none'
-    document.getElementById('viewer-meta-content').innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
+    document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
   }
 }
 
@@ -583,7 +568,7 @@ async function renderCardimgViewer(txid) {
       card = list.find(c => c.txid === txid)
     } catch (e) {
       document.getElementById('viewer-loading').style.display = 'none'
-      document.getElementById('viewer-meta-content').innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
+      document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load: ${e.message}</p>`
       return
     }
   }
@@ -598,7 +583,7 @@ async function renderCardimgViewer(txid) {
   img.onload = () => { document.getElementById('viewer-loading').style.display = 'none' }
   img.onerror = () => {
     document.getElementById('viewer-loading').style.display = 'none'
-    document.getElementById('viewer-meta-content').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+    document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
   }
 
   // Build metadata
@@ -671,7 +656,7 @@ async function renderCardimgViewer(txid) {
     } catch (e) {}
   }
 
-  document.getElementById('viewer-meta-content').innerHTML = metaHtml
+  document.getElementById('viewer-meta').innerHTML = metaHtml
 }
 
 // --- Viewer interactions ---
