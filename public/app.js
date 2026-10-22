@@ -63,7 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   // Viewer: image click → toggle zoom
-  document.getElementById('viewer-image').addEventListener('click', toggleZoom)
+  document.getElementById('viewer-image').addEventListener('click', e => {
+    if (vzDidDrag) { vzDidDrag = false; return }
+    toggleZoom()
+  })
   initViewerPanZoom()
 
   // Viewer: keyboard navigation
@@ -694,6 +697,7 @@ let vzLastX = 0
 let vzLastY = 0
 let vzTouchDist = 0
 let vzTouchStartScale = 1
+let vzDidDrag = false
 
 function toggleZoom() {
   if (vzScale > 1) {
@@ -748,6 +752,7 @@ function initViewerPanZoom() {
     if (vzScale <= 1) return
     e.preventDefault()
     vzDragging = true
+    vzDidDrag = false
     vzLastX = e.clientX
     vzLastY = e.clientY
     img.style.cursor = 'grabbing'
@@ -755,8 +760,11 @@ function initViewerPanZoom() {
 
   document.addEventListener('mousemove', e => {
     if (!vzDragging) return
-    vzX += e.clientX - vzLastX
-    vzY += e.clientY - vzLastY
+    const dx = e.clientX - vzLastX
+    const dy = e.clientY - vzLastY
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) vzDidDrag = true
+    vzX += dx
+    vzY += dy
     vzLastX = e.clientX
     vzLastY = e.clientY
     updateViewerTransform()
