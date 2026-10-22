@@ -157,6 +157,8 @@ function showGallery(tab) {
 
   document.getElementById('gallery-view').style.display = ''
   document.getElementById('viewer-page').style.display = 'none'
+  document.getElementById('topbar').style.display = ''
+  document.querySelector('footer').style.display = ''
 
   const gallery = document.getElementById('gallery')
   const setsView = document.getElementById('sets-view')
