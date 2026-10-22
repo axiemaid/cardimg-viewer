@@ -482,10 +482,10 @@ footer .sep { margin: 0 0.5rem; }
   object-fit: contain;
   cursor: zoom-in;
   transform-origin: center center;
-  transition: transform 0.05s ease-out;
   user-select: none;
   -webkit-user-select: none;
   pointer-events: auto;
+  will-change: transform;
 }
 
 #viewer-loading {
