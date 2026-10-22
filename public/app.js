@@ -732,7 +732,6 @@ function toggleZoom() {
     updateViewerTransform()
   }
 }
-
 function updateViewerTransform() {
   const img = document.getElementById('viewer-image')
   img.style.transform = `translate(${vzX}px, ${vzY}px) scale(${vzScale})`
@@ -750,13 +749,17 @@ function initViewerPanZoom() {
     const delta = e.deltaY > 0 ? 0.9 : 1.1
     const oldScale = vzScale
     vzScale = Math.min(Math.max(vzScale * delta, 1), 8)
-    // Zoom toward cursor
-    const rect = wrap.getBoundingClientRect()
-    const cx = e.clientX - rect.width / 2 - vzX
-    const cy = e.clientY - rect.height / 2 - vzY
-    const ratio = vzScale / oldScale
-    vzX = e.clientX - rect.width / 2 - cx * ratio
-    vzY = e.clientY - rect.height / 2 - cy * ratio
+    if (vzScale === 1) {
+      vzX = 0; vzY = 0
+    } else {
+      // Zoom toward cursor
+      const rect = wrap.getBoundingClientRect()
+      const cx = e.clientX - rect.width / 2 - vzX
+      const cy = e.clientY - rect.height / 2 - vzY
+      const ratio = vzScale / oldScale
+      vzX = e.clientX - rect.width / 2 - cx * ratio
+      vzY = e.clientY - rect.height / 2 - cy * ratio
+    }
     updateViewerTransform()
   }, { passive: false })
 
@@ -823,15 +826,19 @@ function initViewerPanZoom() {
       const dist = Math.sqrt(dx * dx + dy * dy)
       const oldScale = vzScale
       vzScale = Math.min(Math.max(vzTouchStartScale * (dist / vzTouchDist), 1), 8)
-      // Zoom toward pinch midpoint
-      const rect = wrap.getBoundingClientRect()
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
-      const cx = midX - rect.left - rect.width / 2 - vzX
-      const cy = midY - rect.top - rect.height / 2 - vzY
-      const ratio = vzScale / oldScale
-      vzX = midX - rect.left - rect.width / 2 - cx * ratio
-      vzY = midY - rect.top - rect.height / 2 - cy * ratio
+      if (vzScale === 1) {
+        vzX = 0; vzY = 0
+      } else {
+        // Zoom toward pinch midpoint
+        const rect = wrap.getBoundingClientRect()
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        const cx = midX - rect.left - rect.width / 2 - vzX
+        const cy = midY - rect.top - rect.height / 2 - vzY
+        const ratio = vzScale / oldScale
+        vzX = midX - rect.left - rect.width / 2 - cx * ratio
+        vzY = midY - rect.top - rect.height / 2 - cy * ratio
+      }
       updateViewerTransform()
     } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
       e.preventDefault()
