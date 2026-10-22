@@ -145,8 +145,10 @@ function showGallery(tab) {
     setsView.style.display = ''
     setsView.classList.add('active')
     if (allSets.length === 0) loadSets()
-    // Render card code grid (may already be loaded from init)
+    // Clear filter + re-render
+    activeCardFilter = null
     renderCardCodeGrid()
+    renderSetsGrid()
   }
 }
 
