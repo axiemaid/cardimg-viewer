@@ -409,8 +409,6 @@ footer .sep { margin: 0 0.5rem; }
   padding: 0.75rem 2rem;
   background: linear-gradient(to bottom, rgba(13,13,15,0.9), transparent);
   pointer-events: none;
-  max-width: 1400px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -464,8 +462,6 @@ footer .sep { margin: 0 0.5rem; }
   padding: 3.5rem 2rem 0.5rem;
   height: 75vh;
   min-height: 300px;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 #viewer-image-wrap {
@@ -510,8 +506,6 @@ footer .sep { margin: 0 0.5rem; }
   padding: 0.75rem 2rem;
   display: flex;
   justify-content: center;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 .viewer-thumb-strip {
@@ -601,8 +595,6 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev);
   border-top: 1px solid var(--border);
   padding: 1rem 2rem 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 #viewer-meta h3 {
