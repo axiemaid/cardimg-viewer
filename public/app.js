@@ -833,7 +833,17 @@ function initViewerPanZoom() {
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
       const dist = Math.sqrt(dx * dx + dy * dy)
+      const oldScale = vzScale
       vzScale = Math.min(Math.max(vzTouchStartScale * (dist / vzTouchDist), 1), 8)
+      // Zoom toward pinch midpoint
+      const rect = wrap.getBoundingClientRect()
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      const cx = midX - rect.left - rect.width / 2 - vzX
+      const cy = midY - rect.top - rect.height / 2 - vzY
+      const ratio = vzScale / oldScale
+      vzX = midX - rect.left - rect.width / 2 - cx * ratio
+      vzY = midY - rect.top - rect.height / 2 - cy * ratio
       updateViewerTransform()
     } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
       e.preventDefault()
