@@ -400,11 +400,8 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 #viewer-topbar {
-  position: absolute;
+  position: sticky;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
   z-index: 10;
   display: flex;
   align-items: center;
@@ -413,7 +410,8 @@ footer .sep { margin: 0 0.5rem; }
   background: linear-gradient(to bottom, rgba(13,13,15,0.9), transparent);
   pointer-events: none;
   max-width: 1400px;
-  box-sizing: border-box;
+  margin: 0 auto;
+  width: 100%;
 }
 
 #viewer-topbar > * { pointer-events: auto; }
