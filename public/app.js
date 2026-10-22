@@ -25,10 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     navigate('/')
   })
 
-  // Tab switching
+  // Tab switching — clears filter (explicit user action)
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab
+      tabClickClearsFilter = true
       navigate(tab === 'cards' ? '/' : '/uploads')
     })
   })
@@ -149,6 +150,8 @@ function navigate(path) {
   window.scrollTo(0, 0)
 }
 
+let tabClickClearsFilter = false
+
 function showGallery(tab) {
   activeTab = tab
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -175,9 +178,14 @@ function showGallery(tab) {
     setsView.style.display = ''
     setsView.classList.add('active')
     if (allSets.length === 0) loadSets()
-    activeCardFilter = null
-    renderCardCodeGrid()
-    renderSetsGrid()
+    // Only clear filter when user explicitly clicks the Cards tab,
+    // not when navigating back from the viewer
+    if (tabClickClearsFilter) {
+      activeCardFilter = null
+      renderCardCodeGrid()
+      renderSetsGrid()
+    }
+    tabClickClearsFilter = false
   }
 }
 
