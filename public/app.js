@@ -526,8 +526,7 @@ async function renderCardsetViewer(txid) {
     const isUnconfirmed = !set.blockHeight
     metaHtml += `
       <h3>Cardset TxID</h3>
-      <div class="meta-value">${set.cardsetTxid}</div>
-      <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
+      <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${set.cardsetTxid}</a>
       <h3>Block</h3>
       <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : set.blockHeight}</p>
       <h3>Members (${set.memberCount})</h3>
