@@ -663,7 +663,7 @@ footer .sep { margin: 0 0.5rem; }
   .card-txid { font-size: 0.6rem; }
   .card-code-grid { grid-template-columns: repeat(3, 1fr); }
   .sets-grid { grid-template-columns: 1fr; padding: 0.5rem 0; }
-  .card-code-section { padding: 1.5rem 1rem 0; }
+  .card-code-section { padding: 2.5rem 1rem 0; }
   .cardsets-feed-section { padding: 1.5rem 1rem; }
 
   #viewer-main { padding: 0.5rem 1rem 0.5rem; }
