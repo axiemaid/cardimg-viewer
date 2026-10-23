@@ -482,14 +482,6 @@ function showViewer(txid, context) {
 // --- Cardset context ---
 
 async function renderCardsetViewer(txid) {
-  const titleEl = document.getElementById('viewer-title')
-
-  if (viewerCardCode && viewerCardRef) {
-    titleEl.innerHTML = `<span class="viewer-card-code">${viewerCardCode}</span> <span class="viewer-card-name">${viewerCardRef.name}</span>`
-  } else {
-    titleEl.innerHTML = `<span class="viewer-txid">${shortHash(txid)}</span>`
-  }
-
   try {
     const res = await fetch(`${API}/sets/${txid}`)
     if (!res.ok) throw new Error('Card not found')
@@ -558,9 +550,6 @@ async function renderCardsetViewer(txid) {
 // --- Cardimg context ---
 
 async function renderCardimgViewer(txid) {
-  const titleEl = document.getElementById('viewer-title')
-  titleEl.innerHTML = `<span class="viewer-txid">CARDIMG ${shortHash(txid)}</span>`
-
   let card = allCards.find(c => c.txid === txid)
 
   if (!card) {
