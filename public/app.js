@@ -533,8 +533,8 @@ async function renderCardsetViewer(txid) {
       <h3>Members (${set.memberCount})</h3>
     `
     set.members.forEach(m => {
-      metaHtml += `<p style="margin-top:0.6rem;margin-bottom:0.15rem;color:var(--text-dim);font-size:0.85rem">${m.role}</p>`
-      metaHtml += `<a href="/cardimg/${m.txid}" style="display:block;margin-bottom:0.6rem;font-size:0.82rem">${m.txid}</a>`
+      metaHtml += `<p style="margin-top:0.6rem;margin-bottom:0.15rem;color:var(--text-dim);font-size:0.95rem">${m.role}</p>`
+      metaHtml += `<a href="/cardimg/${m.txid}" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${m.txid}</a>`
     })
     document.getElementById('viewer-meta').innerHTML = metaHtml
 
