@@ -622,6 +622,7 @@ async function renderCardimgViewer(txid) {
           const ref = code ? cardReference.find(c => c.code === code) : null
           const label = code && ref ? `${code} — ${ref.name}` : shortHash(s.cardsetTxid)
           metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link">${label}</a>`
+          metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link" style="font-family:'SF Mono','Fira Code',monospace;font-size:0.78rem;color:var(--text-dim)">${s.cardsetTxid}</a>`
         })
 
 // (Appears-in chips section removed — kept in metadata only)
