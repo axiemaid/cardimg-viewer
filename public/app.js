@@ -531,7 +531,6 @@ async function renderCardsetViewer(txid) {
       <h3>Block</h3>
       <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : set.blockHeight}</p>
       <h3>Members</h3>
-      <p>${set.memberCount} card${set.memberCount !== 1 ? 's' : ''} in this set</p>
     `
     set.members.forEach(m => {
       metaHtml += `<div class="meta-value" style="margin-bottom:0.3rem"><a href="/cardimg/${m.txid}" style="color:var(--text);text-decoration:none">${m.role}: ${m.txid}</a></div>`
