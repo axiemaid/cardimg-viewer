@@ -459,7 +459,7 @@ footer .sep { margin: 0 0.5rem; }
   justify-content: center;
   overflow: hidden;
   position: relative;
-  padding: 3.5rem 2rem 0.5rem;
+  padding: 2rem 2rem 0.5rem;
   height: 75vh;
   min-height: 300px;
 }
@@ -666,7 +666,7 @@ footer .sep { margin: 0 0.5rem; }
   .card-code-section { padding: 1.5rem 1rem 0; }
   .cardsets-feed-section { padding: 1.5rem 1rem; }
 
-  #viewer-main { padding: 3rem 1rem 0.5rem; }
+  #viewer-main { padding: 1.5rem 1rem 0.5rem; }
   #viewer-topbar { padding: 0.75rem 1rem; }
   #viewer-bottom { padding: 0.75rem 1rem; }
   #viewer-meta { padding: 1rem 1rem 2rem; }
