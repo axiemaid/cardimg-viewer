@@ -524,7 +524,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .viewer-thumb {
-  width: 72px;
+  width: 88px;
   flex-shrink: 0;
   cursor: pointer;
   border: 2px solid transparent;
@@ -676,5 +676,5 @@ footer .sep { margin: 0 0.5rem; }
   #viewer-topbar { padding: 1rem 1rem; }
   #viewer-bottom { padding: 0.75rem 1rem; }
   #viewer-meta { padding: 1rem 1rem 4rem; }
-  .viewer-thumb { width: 60px; }
+  .viewer-thumb { width: 72px; }
 }
