@@ -618,10 +618,6 @@ async function renderCardimgViewer(txid) {
       if (data.cardsets && data.cardsets.length > 0) {
         metaHtml += `<h3>${data.cardsets.length === 1 ? 'Member of card' : 'Member of cards'}</h3>`
         data.cardsets.forEach(s => {
-          const code = cardCodeMappings[s.cardsetTxid]
-          const ref = code ? cardReference.find(c => c.code === code) : null
-          const label = code && ref ? `${code} — ${ref.name}` : shortHash(s.cardsetTxid)
-          metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link">${label}</a>`
           metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link" style="font-family:'SF Mono','Fira Code',monospace;font-size:0.78rem;color:var(--text-dim)">${s.cardsetTxid}</a>`
         })
 
