@@ -311,7 +311,8 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card-txid {
-  font-size: 0.95rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -390,7 +391,7 @@ footer .sep { margin: 0 0.5rem; }
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100dvh;
+  height: 100vh;
   background: var(--bg);
   display: flex;
   flex-direction: column;
@@ -399,12 +400,13 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 #viewer-topbar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem max(2rem, calc((100% - 1400px) / 2));
+  padding: 0.75rem max(2rem, calc((100% - 1400px) / 2));
   background: linear-gradient(to bottom, rgba(13,13,15,0.9), transparent);
   pointer-events: none;
   width: 100%;
@@ -413,20 +415,13 @@ footer .sep { margin: 0 0.5rem; }
 #viewer-topbar > * { pointer-events: auto; }
 
 #viewer-back {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--text-dim);
   text-decoration: none;
   white-space: nowrap;
-  padding: 0.5rem 0.75rem;
-  margin: -0.5rem -0.75rem;
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
 }
 
-#viewer-back:hover {
-  color: var(--text);
-  background: rgba(255,255,255,0.05);
-}
+#viewer-back:hover { color: var(--text); }
 
 #viewer-title {
   flex: 1;
@@ -464,8 +459,8 @@ footer .sep { margin: 0 0.5rem; }
   justify-content: center;
   overflow: hidden;
   position: relative;
-  padding: 0.5rem 2rem 0.5rem;
-  height: 75dvh;
+  padding: 3.5rem 2rem 0.5rem;
+  height: 75vh;
   min-height: 300px;
 }
 
@@ -506,6 +501,8 @@ footer .sep { margin: 0 0.5rem; }
 #viewer-bottom {
   flex-shrink: 0;
   z-index: 10;
+  background: rgba(13,13,15,0.95);
+  border-top: 1px solid var(--border);
   padding: 0.75rem max(2rem, calc((100% - 1400px) / 2));
   display: flex;
   justify-content: center;
@@ -521,13 +518,13 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .viewer-thumb {
-  width: 88px;
+  width: 72px;
   flex-shrink: 0;
   cursor: pointer;
   border: 2px solid transparent;
   border-radius: 6px;
   overflow: hidden;
-  background: transparent;
+  background: var(--bg-elev2);
   transition: border-color 0.15s;
 }
 
@@ -538,6 +535,7 @@ footer .sep { margin: 0 0.5rem; }
   width: 100%;
   aspect-ratio: 3/4;
   object-fit: contain;
+  background: var(--bg-elev2);
   display: block;
 }
 
@@ -594,13 +592,11 @@ footer .sep { margin: 0 0.5rem; }
 
 #viewer-meta {
   flex-shrink: 0;
-  background: var(--bg-elev);
-  border-top: 1px solid var(--border);
-  padding: 2rem max(2rem, calc((100% - 900px) / 2)) 4rem;
+  padding: 1rem max(2rem, calc((100% - 1400px) / 2)) 2rem;
 }
 
 #viewer-meta h3 {
-  font-size: 1rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-faint);
@@ -668,9 +664,9 @@ footer .sep { margin: 0 0.5rem; }
   .card-code-section { padding: 1.5rem 1rem 0; }
   .cardsets-feed-section { padding: 1.5rem 1rem; }
 
-  #viewer-main { padding: 0.5rem 1rem 0.5rem; }
-  #viewer-topbar { padding: 1rem 1rem; }
+  #viewer-main { padding: 3rem 1rem 0.5rem; }
+  #viewer-topbar { padding: 0.75rem 1rem; }
   #viewer-bottom { padding: 0.75rem 1rem; }
-  #viewer-meta { padding: 1rem 1rem 4rem; }
-  .viewer-thumb { width: 72px; }
+  #viewer-meta { padding: 1rem 1rem 2rem; }
+  .viewer-thumb { width: 60px; }
 }
