@@ -563,17 +563,26 @@ async function renderCardimgViewer(txid) {
   if (card) {
     const thumbUrl = `${API}/thumb/${card.hash}`
     const fullUrl = `${API}/img/${card.hash}`
+    // Show thumbnail immediately, hide spinner as soon as it loads
+    img.onload = () => {
+      document.getElementById('viewer-loading').style.display = 'none'
+    }
+    img.onerror = () => {
+      document.getElementById('viewer-loading').style.display = 'none'
+      document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+    }
     img.src = thumbUrl
+    // Preload full-res in background, swap silently when ready
     const loadId = ++viewerLoadId
     const fullImg = new Image()
     fullImg.onload = () => {
       if (loadId !== viewerLoadId) return  // stale load, ignore
-      document.getElementById('viewer-loading').style.display = 'none'
       img.src = fullUrl
     }
     fullImg.onerror = () => {
-      document.getElementById('viewer-loading').style.display = 'none'
-      document.getElementById('viewer-meta').innerHTML = `<p style="color:#ef4444">Failed to load image</p>`
+      if (loadId === viewerLoadId) {
+        // Full-res failed — thumbnail is already shown, just keep it
+      }
     }
     fullImg.src = fullUrl
   } else {
