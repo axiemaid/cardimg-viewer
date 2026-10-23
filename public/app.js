@@ -626,31 +626,7 @@ async function renderCardimgViewer(txid) {
           metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link">${label}</a>`
         })
 
-        // Also show clickable chips at the bottom
-        const bottom = document.getElementById('viewer-bottom')
-        bottom.innerHTML = ''
-        const chipsWrap = document.createElement('div')
-        chipsWrap.className = 'viewer-appears-chips'
-        const label = document.createElement('div')
-        label.className = 'viewer-appears-label'
-        label.textContent = 'Appears in'
-        chipsWrap.appendChild(label)
-        const chipsRow = document.createElement('div')
-        chipsRow.className = 'viewer-chips-row'
-        data.cardsets.forEach(s => {
-          const code = cardCodeMappings[s.cardsetTxid]
-          const ref = code ? cardReference.find(c => c.code === code) : null
-          const chip = document.createElement('div')
-          chip.className = 'viewer-appears-chip'
-          chip.textContent = code || shortHash(s.cardsetTxid)
-          chip.addEventListener('click', e => {
-            e.stopPropagation()
-            navigate(`/card/${s.cardsetTxid}`)
-          })
-          chipsRow.appendChild(chip)
-        })
-        chipsWrap.appendChild(chipsRow)
-        bottom.appendChild(chipsWrap)
+// (Appears-in chips section removed — kept in metadata only)
       }
     } catch (e) {}
   }
