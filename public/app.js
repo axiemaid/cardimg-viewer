@@ -14,6 +14,7 @@ let viewerMembers = []    // For cardset: array of { txid, hash, role }
 let viewerMemberIndex = 0  // Currently selected member
 let viewerCardCode = null
 let viewerCardRef = null
+let viewerLoadId = 0   // race condition guard for image swaps
 
 
 // --- Init ---
@@ -567,8 +568,10 @@ async function renderCardimgViewer(txid) {
     const thumbUrl = `${API}/thumb/${card.hash}`
     const fullUrl = `${API}/img/${card.hash}`
     img.src = thumbUrl
+    const loadId = ++viewerLoadId
     const fullImg = new Image()
     fullImg.onload = () => {
+      if (loadId !== viewerLoadId) return  // stale load, ignore
       document.getElementById('viewer-loading').style.display = 'none'
       img.src = fullUrl
     }
@@ -672,9 +675,10 @@ function selectViewerMember(index) {
 
   // Load thumbnail first for instant display, then swap to full-res
   img.src = thumbUrl
+  const loadId = ++viewerLoadId
   const fullImg = new Image()
   fullImg.onload = () => {
-    // Swap src directly — will-change:transform handles repaint
+    if (loadId !== viewerLoadId) return  // stale load, ignore
     img.src = fullUrl
   }
   fullImg.src = fullUrl
