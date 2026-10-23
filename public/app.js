@@ -530,7 +530,7 @@ async function renderCardsetViewer(txid) {
       <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
       <h3>Block</h3>
       <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : set.blockHeight}</p>
-      <h3>Members</h3>
+      <h3>Members (${set.memberCount})</h3>
     `
     set.members.forEach(m => {
       metaHtml += `<p style="margin-top:0.6rem;margin-bottom:0.15rem;color:var(--text-dim);font-size:0.85rem">${m.role}</p>`
