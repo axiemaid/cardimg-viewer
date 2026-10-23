@@ -843,7 +843,8 @@ function initViewerPanZoom() {
       const dx = e.touches[0].clientX - swipeStartX
       const dy = e.touches[0].clientY - swipeStartY
       if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        // Horizontal swipe detected — prevent browser from handling
+        // Horizontal swipe detected — claim all touch events
+        wrap.style.touchAction = 'none'
         e.preventDefault()
       }
     } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
@@ -881,6 +882,8 @@ function initViewerPanZoom() {
       }
     }
     swipeTracking = false
+    // Restore pan-y for vertical scrolling
+    if (vzScale === 1) wrap.style.touchAction = 'pan-y'
   }, { passive: true })
 }
 
