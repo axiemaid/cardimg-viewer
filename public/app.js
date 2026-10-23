@@ -591,22 +591,22 @@ async function renderCardimgViewer(txid) {
     const isUnconfirmed = !card.blockHeight
     metaHtml += `
       <h3>TxID</h3>
-      <a href="https://whatsonchain.com/tx/${card.txid}" target="_blank" rel="noopener" class="meta-value" style="color:var(--accent);text-decoration:none">${card.txid}</a>
+      <a href="https://whatsonchain.com/tx/${card.txid}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${card.txid}</a>
       <h3>Block</h3>
-      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : card.blockHeight}</p>
+      <p style="font-size:0.95rem">${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : card.blockHeight}</p>
       <h3>Image Size</h3>
-      <p>${formatBytes(card.size)}</p>
+      <p style="font-size:0.95rem">${formatBytes(card.size)}</p>
       <h3>Direct Link</h3>
-      <a href="${API}/img/${card.hash}" target="_blank" rel="noopener">Open raw image →</a>
+      <a href="${API}/img/${card.hash}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">Open raw image →</a>
     `
   } else {
     metaHtml += `
       <h3>TxID</h3>
-      <a href="https://whatsonchain.com/tx/${txid}" target="_blank" rel="noopener" class="meta-value" style="color:var(--accent);text-decoration:none">${txid}</a>
+      <a href="https://whatsonchain.com/tx/${txid}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${txid}</a>
       <h3>Status</h3>
-      <p>Not in local index. Image fetched from chain.</p>
+      <p style="font-size:0.95rem">Not in local index. Image fetched from chain.</p>
       <h3>Direct Link</h3>
-      <a href="${API}/tx/${txid}" target="_blank" rel="noopener">Open raw image →</a>
+      <a href="${API}/tx/${txid}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">Open raw image →</a>
     `
   }
 
@@ -618,7 +618,7 @@ async function renderCardimgViewer(txid) {
       if (data.cardsets && data.cardsets.length > 0) {
         metaHtml += `<h3>${data.cardsets.length === 1 ? 'Member of card' : 'Member of cards'}</h3>`
         data.cardsets.forEach(s => {
-          metaHtml += `<a href="/card/${s.cardsetTxid}" class="viewer-appears-link" style="font-family:'SF Mono','Fira Code',monospace;font-size:0.78rem;color:var(--text-dim)">${s.cardsetTxid}</a>`
+          metaHtml += `<a href="/card/${s.cardsetTxid}" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${s.cardsetTxid}</a>`
         })
 
 // (Appears-in chips section removed — kept in metadata only)
