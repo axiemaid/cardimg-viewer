@@ -523,9 +523,6 @@ async function renderCardsetViewer(txid) {
 
     // Build metadata
     let metaHtml = ''
-    if (viewerCardCode && viewerCardRef) {
-      metaHtml += `<h3>Card Code</h3><p>${viewerCardCode} — ${viewerCardRef.name}</p><p style="color:var(--text-dim);font-size:0.8rem">${viewerCardRef.title}</p>`
-    }
     const isUnconfirmed = !set.blockHeight
     metaHtml += `
       <h3>Cardset TxID</h3>
