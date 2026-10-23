@@ -592,7 +592,6 @@ async function renderCardimgViewer(txid) {
     metaHtml += `
       <h3>TxID</h3>
       <div class="meta-value">${card.txid}</div>
-      <a href="https://whatsonchain.com/tx/${card.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
       <h3>Block</h3>
       <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : card.blockHeight}</p>
       <h3>Image Size</h3>
@@ -604,7 +603,6 @@ async function renderCardimgViewer(txid) {
     metaHtml += `
       <h3>TxID</h3>
       <div class="meta-value">${txid}</div>
-      <a href="https://whatsonchain.com/tx/${txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
       <h3>Status</h3>
       <p>Not in local index. Image fetched from chain.</p>
       <h3>Direct Link</h3>
