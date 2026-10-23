@@ -528,8 +528,8 @@ async function renderCardsetViewer(txid) {
       <h3>Cardset TxID</h3>
       <div class="meta-value">${set.cardsetTxid}</div>
       <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
-      <h3>Status</h3>
-      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Unconfirmed (mempool)</span>' : 'Confirmed'}</p>
+      <h3>Block</h3>
+      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : set.blockHeight}</p>
       <h3>Members</h3>
       <p>${set.memberCount} card${set.memberCount !== 1 ? 's' : ''} in this set</p>
     `
@@ -596,7 +596,7 @@ async function renderCardimgViewer(txid) {
       <div class="meta-value">${card.txid}</div>
       <a href="https://whatsonchain.com/tx/${card.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>
       <h3>Block</h3>
-      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Unconfirmed (mempool)</span>' : card.blockHeight}</p>
+      <p>${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : card.blockHeight}</p>
       <h3>Image Size</h3>
       <p>${formatBytes(card.size)}</p>
       <h3>Direct Link</h3>
