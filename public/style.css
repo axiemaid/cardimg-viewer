@@ -669,6 +669,6 @@ footer .sep { margin: 0 0.5rem; }
   #viewer-main { padding: 0.5rem 1rem 0.5rem; }
   #viewer-topbar { padding: 0.75rem 1rem; }
   #viewer-bottom { padding: 0.75rem 1rem; }
-  #viewer-meta { padding: 1rem 1rem 2rem; }
+  #viewer-meta { padding: 1rem 1rem 4rem; }
   .viewer-thumb { width: 60px; }
 }
