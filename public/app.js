@@ -510,10 +510,6 @@ async function renderCardsetViewer(txid) {
       thumbImg.src = member.hash ? `${API}/thumb/${member.hash}` : `${API}/thumb/tx/${member.txid}`
       thumbImg.onerror = () => { thumbImg.style.opacity = '0.3' }
       thumb.appendChild(thumbImg)
-      const roleLabel = document.createElement('div')
-      roleLabel.className = 'viewer-thumb-role'
-      roleLabel.textContent = member.role || `#${i}`
-      thumb.appendChild(roleLabel)
       thumb.addEventListener('click', e => {
         e.stopPropagation()
         selectViewerMember(i)
