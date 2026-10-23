@@ -522,7 +522,7 @@ async function renderCardsetViewer(txid) {
     let metaHtml = ''
     const isUnconfirmed = !set.blockHeight
     metaHtml += `
-      <h3>Cardset TxID</h3>
+      <h3>Card TxID</h3>
       <a href="https://whatsonchain.com/tx/${set.cardsetTxid}" target="_blank" rel="noopener" style="display:block;margin-bottom:0.6rem;font-size:0.95rem">${set.cardsetTxid}</a>
       <h3>Block</h3>
       <p style="font-size:0.95rem">${isUnconfirmed ? '<span style="color:#fbbf24">Pending in mempool</span>' : set.blockHeight}</p>
