@@ -336,7 +336,7 @@ footer .sep { margin: 0 0.5rem; }
 .card-code-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 0.5rem;
+  padding: 2rem 2rem 0.5rem;
 }
 
 .card-code-grid {
@@ -372,7 +372,7 @@ footer .sep { margin: 0 0.5rem; }
 .cardsets-feed-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 1.5rem;
+  padding: 1.5rem 2rem 1.5rem;
 }
 
 .set-card-left {
@@ -406,7 +406,7 @@ footer .sep { margin: 0 0.5rem; }
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 2rem;
+  padding: 0.75rem max(2rem, calc((100% - 1400px) / 2));
   background: linear-gradient(to bottom, rgba(13,13,15,0.9), transparent);
   pointer-events: none;
   width: 100%;
@@ -503,7 +503,7 @@ footer .sep { margin: 0 0.5rem; }
   z-index: 10;
   background: rgba(13,13,15,0.95);
   border-top: 1px solid var(--border);
-  padding: 0.75rem 2rem;
+  padding: 0.75rem max(2rem, calc((100% - 1400px) / 2));
   display: flex;
   justify-content: center;
 }
@@ -594,7 +594,7 @@ footer .sep { margin: 0 0.5rem; }
   flex-shrink: 0;
   background: var(--bg-elev);
   border-top: 1px solid var(--border);
-  padding: 1rem 2rem 2rem;
+  padding: 1rem max(2rem, calc((100% - 1400px) / 2)) 2rem;
 }
 
 #viewer-meta h3 {
@@ -657,15 +657,18 @@ footer .sep { margin: 0 0.5rem; }
   .title { font-size: 0.95rem; }
   .tab-toggle { margin-left: auto; }
   .page-stats { font-size: 0.75rem; }
-  #gallery { padding: 0.5rem 0.5rem 1rem; }
+  #gallery { padding: 0.5rem 1rem 1rem; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-info { padding: 0.3rem 0.15rem; }
   .card-txid { font-size: 0.6rem; }
   .card-code-grid { grid-template-columns: repeat(3, 1fr); }
   .sets-grid { grid-template-columns: 1fr; padding: 0.5rem 0; }
-  .card-code-section { padding: 1.5rem 0.75rem 0; }
-  .cardsets-feed-section { padding: 1.5rem 0.75rem; }
+  .card-code-section { padding: 1.5rem 1rem 0; }
+  .cardsets-feed-section { padding: 1.5rem 1rem; }
 
-  #viewer-main { padding-top: 3rem; }
+  #viewer-main { padding: 3rem 1rem 0.5rem; }
+  #viewer-topbar { padding: 0.75rem 1rem; }
+  #viewer-bottom { padding: 0.75rem 1rem; }
+  #viewer-meta { padding: 1rem 1rem 2rem; }
   .viewer-thumb { width: 60px; }
 }
