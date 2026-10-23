@@ -391,7 +391,7 @@ footer .sep { margin: 0 0.5rem; }
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: var(--bg);
   display: flex;
   flex-direction: column;
@@ -460,7 +460,7 @@ footer .sep { margin: 0 0.5rem; }
   overflow: hidden;
   position: relative;
   padding: 0.5rem 2rem 0.5rem;
-  height: 75vh;
+  height: 75dvh;
   min-height: 300px;
 }
 
