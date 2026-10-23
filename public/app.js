@@ -838,6 +838,14 @@ function initViewerPanZoom() {
         vzY = midY - rect.top - rect.height / 2 - cy * ratio
       }
       updateViewerTransform()
+    } else if (e.touches.length === 1 && swipeTracking && vzScale === 1) {
+      // Track horizontal movement to claim the gesture from browser
+      const dx = e.touches[0].clientX - swipeStartX
+      const dy = e.touches[0].clientY - swipeStartY
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        // Horizontal swipe detected — prevent browser from handling
+        e.preventDefault()
+      }
     } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
       e.preventDefault()
       const dx = e.touches[0].clientX - vzLastX
