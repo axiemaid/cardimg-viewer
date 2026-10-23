@@ -616,7 +616,7 @@ async function renderCardimgViewer(txid) {
       const res = await fetch(`${API}/card/${card.hash}/sets`)
       const data = await res.json()
       if (data.cardsets && data.cardsets.length > 0) {
-        metaHtml += `<h3>Appears in ${data.cardsets.length} card${data.cardsets.length > 1 ? 's' : ''}</h3>`
+        metaHtml += `<h3>${data.cardsets.length === 1 ? 'Member of card' : 'Member of cards'}</h3>`
         data.cardsets.forEach(s => {
           const code = cardCodeMappings[s.cardsetTxid]
           const ref = code ? cardReference.find(c => c.code === code) : null
