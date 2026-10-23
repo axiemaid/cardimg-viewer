@@ -790,24 +790,14 @@ function initViewerPanZoom() {
     }
   })
 
-  // Touch: pinch to zoom + drag to pan + swipe to cycle members
-  let swipeStartX = 0
-  let swipeStartY = 0
-  let swipeTracking = false
-
+  // Touch: pinch to zoom + drag to pan
   wrap.addEventListener('touchstart', e => {
     if (e.touches.length === 1 && vzScale > 1) {
       vzDragging = true
       vzLastX = e.touches[0].clientX
       vzLastY = e.touches[0].clientY
-    } else if (e.touches.length === 1 && vzScale === 1) {
-      // Track potential swipe when not zoomed
-      swipeTracking = true
-      swipeStartX = e.touches[0].clientX
-      swipeStartY = e.touches[0].clientY
     } else if (e.touches.length === 2) {
       vzDragging = false
-      swipeTracking = false
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
       vzTouchDist = Math.sqrt(dx * dx + dy * dy)
@@ -838,15 +828,6 @@ function initViewerPanZoom() {
         vzY = midY - rect.top - rect.height / 2 - cy * ratio
       }
       updateViewerTransform()
-    } else if (e.touches.length === 1 && swipeTracking && vzScale === 1) {
-      // Track horizontal movement to claim the gesture from browser
-      const dx = e.touches[0].clientX - swipeStartX
-      const dy = e.touches[0].clientY - swipeStartY
-      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        // Horizontal swipe detected — claim all touch events
-        wrap.style.touchAction = 'none'
-        e.preventDefault()
-      }
     } else if (e.touches.length === 1 && vzDragging && vzScale > 1) {
       e.preventDefault()
       const dx = e.touches[0].clientX - vzLastX
@@ -863,27 +844,6 @@ function initViewerPanZoom() {
   wrap.addEventListener('touchend', () => {
     vzDragging = false
     img.style.cursor = vzScale > 1 ? 'grab' : 'zoom-in'
-
-    // Swipe to cycle members when not zoomed
-    if (swipeTracking && vzScale === 1 && viewerMembers.length > 1) {
-      // Use changedTouches since touches is empty on touchend
-      const touch = (e.changedTouches && e.changedTouches[0]) || null
-      if (touch) {
-        const dx = touch.clientX - swipeStartX
-        const dy = touch.clientY - swipeStartY
-        // Horizontal swipe, mostly horizontal movement
-        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-          if (dx > 0) {
-            cycleMember(-1)  // swipe right → previous
-          } else {
-            cycleMember(1)   // swipe left → next
-          }
-        }
-      }
-    }
-    swipeTracking = false
-    // Restore pan-y for vertical scrolling
-    if (vzScale === 1) wrap.style.touchAction = 'pan-y'
   }, { passive: true })
 }
 
