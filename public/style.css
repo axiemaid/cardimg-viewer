@@ -400,8 +400,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 #viewer-topbar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 10;
   display: flex;
   align-items: center;
