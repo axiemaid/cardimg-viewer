@@ -311,8 +311,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card-txid {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
