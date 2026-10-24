@@ -515,10 +515,7 @@ function createScanEntry(zoneName, file, position) {
   // Summary goes in the summary area
   if (summaryDiv) {
     summaryDiv.innerHTML = `
-      <div class="card-zone-label">${zoneLabel}</div>
-      <div class="scan-filename">${file.name}</div>
-      <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
-      <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+      <div class="scan-status analyzing"><span class="scan-spinner"></span>Processing...</div>
       <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
     `
   }
@@ -544,7 +541,7 @@ async function analyzeCard() {
 }
 
 function renderScanResult(scan) {
-  const { file, zone, position, zoneDiv, summaryDiv, result: r } = scan
+  const { zone, position, zoneDiv, summaryDiv, result: r } = scan
   const zoneLabel = zone === 'front' ? 'Front' : 'Back'
   if (!summaryDiv) return
 
@@ -557,24 +554,12 @@ function renderScanResult(scan) {
       img.style.opacity = '1'
       img.alt = `${zoneLabel} processed`
     }
-    let html = `<div class="card-zone-label">${zoneLabel}</div>`
-    html += `<div class="scan-filename">${file.name}</div>`
-    html += `<div class="scan-status pass">✓ Passed</div>`
-    html += `<div class="scan-check-grid">`
-    html += `<span class="scan-label">DPI:</span><span class="scan-value scan-pass">${r.imageDpi}</span>`
-    html += `<span class="scan-label">Card:</span><span class="scan-value">${r.cardWidth}×${r.cardHeight}</span>`
-    html += `<span class="scan-label">Size:</span><span class="scan-value">${(r.size / 1024).toFixed(1)}KB</span>`
-    html += `</div>`
-    if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+    let html = `<div class="scan-status ready">Ready</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     summaryDiv.innerHTML = html
   } else {
-    let html = `<div class="card-zone-label">${zoneLabel}</div>`
-    html += `<div class="scan-filename">${file.name}</div>`
-    html += `<div class="scan-status fail">✗ Failed</div>`
-    if (r.imageDpi) html += `<div class="scan-check-grid"><span class="scan-label">DPI:</span><span class="scan-value scan-fail">${r.imageDpi}</span></div>`
+    let html = `<div class="scan-status fail">✗ Failed</div>`
     for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
-    if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Dismiss</button></div>`
     summaryDiv.innerHTML = html
   }
@@ -657,20 +642,12 @@ async function uploadAll() {
       const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
       if (!scan.summaryDiv) continue
       if (upload) {
-        let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
-        html += `<div class="scan-filename">${upload.filename}</div>`
-        html += `<div class="scan-status pass">✓ Uploaded</div>`
-        html += `<div class="scan-detail">`
-        html += `<span class="scan-label">TXID:</span> <span class="scan-txid">${upload.txid}</span><br>`
-        html += `<span class="scan-label">Fee:</span> ${upload.fee} sats<br>`
-        html += `<span class="scan-label">Size:</span> ${(upload.size / 1024).toFixed(1)}KB<br>`
-        html += `<a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>`
-        html += `</div>`
+        let html = `<div class="scan-status pass">✓ Uploaded</div>`
+        html += `<div class="scan-detail"><a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on chain →</a></div>`
         scan.summaryDiv.innerHTML = html
       } else {
         const err = data.errors && data.errors.find(e => e.filename === filename)
-        let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
-        html += `<div class="scan-status fail">✗ Upload failed: ${err ? err.error : 'unknown'}</div>`
+        let html = `<div class="scan-status fail">✗ ${err ? err.error : 'unknown'}</div>`
         scan.summaryDiv.innerHTML = html
       }
     }

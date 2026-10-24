@@ -739,15 +739,24 @@ footer .sep { margin: 0 0.5rem; }
 .card-zone-summary {
   padding: 0.35rem 0.25rem 0;
   font-size: 0.68rem;
-  text-align: left;
+  text-align: center;
   min-height: 1.2rem;
 }
 
 .card-zone-label {
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--text);
-  margin-bottom: 0.1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.scan-status.ready {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4a4;
 }
 
 .card-zone-summary .scan-filename {
