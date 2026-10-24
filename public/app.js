@@ -603,33 +603,18 @@ function getAllScans() {
 }
 
 function updateBatchBar() {
-  const batchBar = document.getElementById('upload-batch-bar')
-  const batchInfo = document.getElementById('upload-batch-info')
   const btnUploadAll = document.getElementById('btn-upload-all')
-  if (!batchBar) return
+  if (!btnUploadAll) return
 
   const all = getAllScans()
-  if (all.length === 0) { batchBar.classList.add('hidden'); return }
-  batchBar.classList.remove('hidden')
-
   const passed = all.filter(s => s.result && s.result.passed)
   const failed = all.filter(s => s.result && !s.result.passed)
   const analyzing = all.filter(s => !s.result)
 
-  if (analyzing.length > 0) {
-    batchInfo.innerHTML = `Analyzing ${analyzing.length} image(s)...`
-    btnUploadAll.disabled = true
-  } else if (failed.length > 0) {
-    batchInfo.innerHTML = `<strong>${passed.length}</strong> passed, <strong>${failed.length}</strong> failed — fix or remove failed images`
-    btnUploadAll.disabled = true
-  } else if (passed.length === 2) {
-    batchInfo.innerHTML = `<strong>Front + Back</strong> ready — linked via CARDSET`
+  // Enable only when both front + back pass
+  if (passed.length === 2 && failed.length === 0 && analyzing.length === 0) {
     btnUploadAll.disabled = false
-  } else if (passed.length === 1) {
-    batchInfo.innerHTML = `Front only — add back image to link via CARDSET`
-    btnUploadAll.disabled = true
   } else {
-    batchInfo.innerHTML = 'No images ready'
     btnUploadAll.disabled = true
   }
 }
@@ -709,7 +694,7 @@ async function uploadAll() {
       summaryDiv.classList.remove('hidden')
     }
 
-    document.getElementById('upload-batch-bar').classList.add('hidden')
+    btnUploadAll.disabled = false
     loadStats()
     loadCards(true)
     loadWalletStatus()
@@ -722,7 +707,6 @@ async function uploadAll() {
         infoDiv.innerHTML = html
       }
     }
-    document.getElementById('upload-batch-info').innerHTML = '✗ Upload error: ' + err.message
     btnUploadAll.disabled = false
     btnUploadAll.textContent = 'Upload Card to BSV'
   }
