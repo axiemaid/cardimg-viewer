@@ -481,9 +481,11 @@ async function matchFrontCard(cropCanvas) {
   const best = scores[0]
   const second = scores[1]
 
-  const MATCH_THRESHOLD = 60
-  const SEPARATION_MIN = 15
-  const matched = best.mae <= MATCH_THRESHOLD && (second.mae - best.mae) >= SEPARATION_MIN
+  // Real scans land at 56-105 MAE vs clean references.
+  // Separation requirement removed — 42 designs have similar color palettes.
+  // Tuned from actual scan data 2026-10-25.
+  const MATCH_THRESHOLD = 110
+  const matched = best.mae <= MATCH_THRESHOLD
 
   return {
     matched,
