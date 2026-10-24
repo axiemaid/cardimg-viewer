@@ -692,9 +692,11 @@ async function uploadAll() {
     }
 
     btnUploadAll.disabled = false
-    loadStats()
-    loadCards(true)
-    loadWalletStatus()
+
+    // Refresh gallery + stats (non-blocking — don't let errors here overwrite upload results)
+    loadStats().catch(() => {})
+    loadCards(true).catch(() => {})
+    loadWalletStatus().catch(() => {})
   } catch (err) {
     for (const scan of passed) {
       if (scan.summaryDiv) {
