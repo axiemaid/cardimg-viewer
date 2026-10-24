@@ -247,18 +247,16 @@ function initUploadZone() {
     })
   }
 
+  // Use event delegation on each zone — survives innerHTML rewrites
   document.querySelectorAll('.card-zone-drop').forEach(zone => {
     const zoneContainer = zone.closest('.card-zone')
     const zoneName = zoneContainer.dataset.zone
-    const input = zone.querySelector('input[type=file]')
-    if (!input) return
 
-    zone.addEventListener('click', () => input.click())
-
-    input.addEventListener('change', e => {
-      const files = Array.from(e.target.files)
-      for (const f of files) handleFileDrop(zoneName, f)
-      input.value = ''
+    zone.addEventListener('click', e => {
+      // Don't trigger when clicking buttons inside the zone
+      if (e.target.closest('button')) return
+      const input = zone.querySelector('input[type=file]')
+      if (input) input.click()
     })
 
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover') })
@@ -269,6 +267,18 @@ function initUploadZone() {
       const files = Array.from(e.dataTransfer.files)
       for (const f of files) handleFileDrop(zoneName, f)
     })
+  })
+
+  // Re-wire file inputs after innerHTML rewrites (for replace workflow)
+  document.addEventListener('change', e => {
+    if (e.target.matches('.card-zone-drop input[type=file]')) {
+      const zone = e.target.closest('.card-zone-drop')
+      const zoneContainer = zone.closest('.card-zone')
+      const zoneName = zoneContainer.dataset.zone
+      const files = Array.from(e.target.files)
+      for (const f of files) handleFileDrop(zoneName, f)
+      e.target.value = ''
+    }
   })
 }
 
@@ -498,7 +508,7 @@ function createScanEntry(zoneName, file, position) {
   const zoneLabel = zoneName === 'front' ? 'Front' : 'Back'
   const imgUrl = URL.createObjectURL(file)
 
-  // Render the result directly inside the drop zone: 50% thumb + 50% info
+  // Render the result directly inside the drop zone
   zoneDiv.innerHTML = `
     <div class="zone-result">
       <div class="zone-result-thumb">
@@ -512,6 +522,7 @@ function createScanEntry(zoneName, file, position) {
         <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
       </div>
     </div>
+    <input type="file" accept="image/*" style="display:none" />
   `
 
   return { file, zoneDiv, position, zone: zoneName, result: null, uploadBuffer: null }
@@ -575,12 +586,12 @@ function renderScanResult(scan) {
 function removeScan(zone, position) {
   if (zone === 'front') {
     if (cardState.front) {
-      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-empty"><div class="card-zone-label">Front</div><div class="card-zone-placeholder">Drop or click</div></div><input type="file" accept="image/*" style="display:none" />'
       cardState.front = null
     }
   } else if (zone === 'back') {
     if (cardState.back) {
-      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-empty"><div class="card-zone-label">Back</div><div class="card-zone-placeholder">Drop or click</div></div><input type="file" accept="image/*" style="display:none" />'
       cardState.back = null
     }
   }

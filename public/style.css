@@ -654,7 +654,7 @@ footer .sep { margin: 0 0.5rem; }
 /* --- Card Upload Zones --- */
 
 #upload-zone {
-  max-width: 1200px;
+  max-width: 640px;
   margin: 0 auto;
   padding: 0 0 1.5rem;
 }
@@ -688,31 +688,14 @@ footer .sep { margin: 0 0.5rem; }
 .card-upload-zones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .card-zone {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-
-.card-zone-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.card-zone-required {
-  font-size: 0.7rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.card-zone-optional {
-  font-size: 0.7rem;
-  color: var(--text-faint);
 }
 
 .card-zone-drop {
@@ -735,27 +718,43 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev2);
 }
 
-.card-zone-placeholder {
-  color: var(--text-faint);
-  font-size: 0.82rem;
+/* Empty state: label + placeholder centered */
+
+.card-zone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-/* Inline result inside drop zone: 50% thumb + 50% info */
+.card-zone-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.card-zone-placeholder {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+/* Populated state: desktop = vertical (thumb top, info bottom) */
 
 .zone-result {
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  align-items: stretch;
 }
 
 .zone-result-thumb {
-  width: 50%;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   background: var(--bg-elev2);
+  min-height: 0;
 }
 
 .zone-result-img {
@@ -765,29 +764,29 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .zone-result-info {
-  width: 50%;
-  padding: 0.5rem;
+  padding: 0.35rem 0.5rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   overflow-y: auto;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   text-align: left;
+  flex-shrink: 0;
 }
 
 .zone-result-info .scan-filename {
-  font-size: 0.68rem;
-  margin-bottom: 0.15rem;
+  font-size: 0.65rem;
+  margin-bottom: 0.1rem;
 }
 .zone-result-info .scan-check-grid {
-  font-size: 0.68rem;
-  gap: 1px 0.5rem;
+  font-size: 0.65rem;
+  gap: 1px 0.4rem;
 }
 .zone-result-info .scan-actions {
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
 }
 .zone-result-info .scan-btn-remove {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   padding: 3px 10px;
 }
 
@@ -936,7 +935,6 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 @media (max-width: 768px) {
-  .card-upload-zones { grid-template-columns: 1fr; }
   #topbar {
     padding: 0.6rem 1rem;
     gap: 0.6rem;
@@ -958,4 +956,10 @@ footer .sep { margin: 0 0.5rem; }
   #viewer-bottom { padding: 0.75rem 1rem; }
   #viewer-meta { padding: 1rem 1rem 4rem; }
   .viewer-thumb { width: 72px; }
+
+  /* Mobile: upload zones stack, populated = horizontal thumb+info */
+  .card-upload-zones { grid-template-columns: 1fr; max-width: 240px; }
+  .zone-result { flex-direction: row; }
+  .zone-result-thumb { width: 50%; flex: none; }
+  .zone-result-info { width: 50%; }
 }
