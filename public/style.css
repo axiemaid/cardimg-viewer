@@ -928,9 +928,6 @@ footer .sep { margin: 0 0.5rem; }
     gap: 2rem;
     max-width: 600px;
   }
-  .card-zone-drop {
-    aspect-ratio: 4/5;
-  }
 }
 
 @media (max-width: 1100px) {
