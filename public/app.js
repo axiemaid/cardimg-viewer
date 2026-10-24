@@ -195,12 +195,11 @@ async function loadStats() {
   } catch (e) {}
 }
 
-// --- Card Upload Zones (client-side processing) ---
+// --- Scanner Upload Zone (client-side processing) ---
 
-// Zone state: front (single), back (single), extra (array)
-const cardState = { front: null, back: null, extra: [] }
+const scans = []
 
-// Scan constants
+// Scan constants — must match server-side scanner
 const REF_CARD_WIDTH_600 = 1386
 const REF_CARD_HEIGHT_600 = 2005
 const REF_DPI = 600
@@ -225,7 +224,7 @@ async function loadWalletStatus() {
     }
     const bal = info.balance
     if (!bal || bal.total < 5000) {
-      el.textContent = `Wallet low: ${bal ? bal.total.toLocaleString() : 0} sats`
+      el.textContent = `Wallet low: ${bal ? bal.total.toLocaleString() : 0} sats — ${info.address}`
       el.className = 'upload-wallet-status low'
     } else {
       el.textContent = `Wallet: ${bal.total.toLocaleString()} sats · ${info.utxos} UTXOs`
@@ -238,174 +237,339 @@ async function loadWalletStatus() {
 }
 
 function initUploadZone() {
-  // Wire up each zone
-  document.querySelectorAll('.card-zone-drop').forEach(zone => {
-    const zoneContainer = zone.closest('.card-zone')
-    const zoneName = zoneContainer.dataset.zone
-    const input = zone.querySelector('input[type=file]')
+  const dropzone = document.getElementById('upload-dropzone')
+  const fileInput = document.getElementById('upload-input')
+  if (!dropzone || !fileInput) return
 
-    zone.addEventListener('click', () => input.click())
-
-    input.addEventListener('change', e => {
-      const files = Array.from(e.target.files)
-      for (const f of files) handleFileDrop(zoneName, f)
-      input.value = ''
-    })
-
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover') })
-    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'))
-    zone.addEventListener('drop', e => {
-      e.preventDefault()
-      zone.classList.remove('dragover')
-      const files = Array.from(e.dataTransfer.files)
-      for (const f of files) handleFileDrop(zoneName, f)
-    })
-  })
-
-  const resetBtn = document.getElementById('upload-reset-btn')
-  if (resetBtn) resetBtn.addEventListener('click', resetCard)
+  dropzone.addEventListener('click', () => fileInput.click())
+  fileInput.addEventListener('change', e => handleFiles(e.target.files))
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover') })
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'))
+  dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files) })
 }
 
-function handleFileDrop(zoneName, file) {
-  // Front and back: single slot, replace existing
-  if (zoneName === 'front') {
-    if (cardState.front) cardState.front.div.remove()
-    cardState.front = createScanEntry(zoneName, file, 0)
-  } else if (zoneName === 'back') {
-    if (cardState.back) cardState.back.div.remove()
-    cardState.back = createScanEntry(zoneName, file, 1)
-  } else {
-    // Extra: append, position = 2 + index
-    const pos = 2 + cardState.extra.length
-    const entry = createScanEntry(zoneName, file, pos)
-    cardState.extra.push(entry)
+// --- Client-side scan logic ---
+
+function isBlack(p) { return p.r < BLACK_THRESHOLD && p.g < BLACK_THRESHOLD && p.b < BLACK_THRESHOLD }
+function isWhite(p) { return p.r > WHITE_THRESHOLD && p.g > WHITE_THRESHOLD && p.b > WHITE_THRESHOLD }
+function isBackground(p) { return isBlack(p) || isWhite(p) }
+
+function isContent(p) {
+  if (isBackground(p)) return false
+  const maxC = Math.max(p.r, p.g, p.b)
+  const minC = Math.min(p.r, p.g, p.b)
+  const sat = maxC === 0 ? 0 : (maxC - minC) / maxC
+  if (maxC < 50 && sat < CONTENT_SAT_THRESHOLD) return false
+  if (maxC >= 50 && maxC <= 220 && sat < CONTENT_SAT_THRESHOLD) return false
+  return true
+}
+
+function getPixel(data, w, x, y, ch) {
+  const idx = (y * w + x) * ch
+  return { r: data[idx], g: data[idx + 1], b: data[idx + 2] }
+}
+
+function detectCardEdges(data, w, h, ch) {
+  const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 100))
+  const thresholdRatio = 0.3
+
+  let top = 0
+  for (let y = 0; y < h; y += sampleStep) {
+    let cc = 0, sc = 0
+    for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { top = y; break }
   }
-  analyzeCard()
+
+  let bottom = h - 1
+  for (let y = h - 1; y >= 0; y -= sampleStep) {
+    let cc = 0, sc = 0
+    for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { bottom = y; break }
+  }
+
+  let left = 0
+  for (let x = 0; x < w; x += sampleStep) {
+    let cc = 0, sc = 0
+    for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { left = x; break }
+  }
+
+  let right = w - 1
+  for (let x = w - 1; x >= 0; x -= sampleStep) {
+    let cc = 0, sc = 0
+    for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { right = x; break }
+  }
+
+  const cardWidth = right - left
+  const cardHeight = bottom - top
+  return { top, bottom, left, right, cardWidth, cardHeight, found: cardWidth > 0 && cardHeight > 0 }
 }
 
-function createScanEntry(zoneName, file, position) {
-  const resultsDiv = document.getElementById('upload-results')
-  const div = document.createElement('div')
-  div.className = 'scan-result analyzing'
-  div.dataset.zone = zoneName
-  div.dataset.position = position
-  const imgUrl = URL.createObjectURL(file)
-  const zoneLabel = zoneName === 'front' ? 'Front' : zoneName === 'back' ? 'Back' : `Additional #${position - 1}`
-  div.innerHTML = `
-    <div class="scan-preview"><img src="${imgUrl}" alt="original" style="opacity:0.5"></div>
-    <div class="scan-info">
-      <div class="scan-zone-tag">${zoneLabel}</div>
-      <div class="scan-filename">${file.name}</div>
-      <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
-      <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
-    </div>
-  `
-  resultsDiv.appendChild(div)
-  const entry = { file, div, position, zone: zoneName, result: null, uploadBuffer: null }
-  return entry
+function validateCardDimensions(edges, dpi) {
+  const { cardWidth, cardHeight } = edges
+  if (cardWidth <= 0 || cardHeight <= 0) return { valid: false, reason: 'Card dimensions zero or negative' }
+
+  const isPortrait = cardHeight >= cardWidth
+  const scale = dpi / REF_DPI
+  const expectedW = Math.round((isPortrait ? REF_CARD_WIDTH_600 : REF_CARD_HEIGHT_600) * scale)
+  const expectedH = Math.round((isPortrait ? REF_CARD_HEIGHT_600 : REF_CARD_WIDTH_600) * scale)
+  const widthRatio = cardWidth / expectedW
+  const heightRatio = cardHeight / expectedH
+  const minAcceptable = 1 - CARD_SIZE_TOLERANCE
+  const valid = widthRatio >= minAcceptable && heightRatio >= minAcceptable
+
+  if (!valid) {
+    const worst = Math.min(widthRatio, heightRatio) < widthRatio ? 'height' : 'width'
+    const actual = worst === 'height' ? cardHeight : cardWidth
+    const expected = worst === 'height' ? expectedH : expectedW
+    return { valid: false, reason: `Card ${worst} is ${actual}px but expected ~${expected}px at ${dpi} DPI (±10%) — card may be cut off` }
+  }
+  return { valid: true, orientation: isPortrait ? 'portrait' : 'landscape' }
 }
 
-async function analyzeCard() {
-  const all = getAllScans()
-  const needsAnalysis = all.filter(s => s && !s.result)
-  for (const scan of needsAnalysis) {
-    try {
-      const r = await scanImage(scan.file)
-      scan.result = r
-      scan.uploadBuffer = r.uploadBuffer
-      scan.div.classList.remove('analyzing')
-      scan.div.classList.add(r.passed ? 'ready' : 'failed')
-      renderScanResult(scan)
-    } catch (err) {
-      scan.result = { passed: false, failures: [err.message], warnings: [], imageDpi: null }
-      scan.div.classList.remove('analyzing')
-      scan.div.classList.add('failed')
-      renderScanResult(scan)
+function validateBackground(data, w, h, ch, edges) {
+  const { top, bottom, left, right } = edges
+  const step = Math.max(1, Math.floor(Math.min(w, h) / 200))
+  let bg = 0, total = 0
+  for (let y = 0; y < top; y += step)
+    for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let y = bottom + 1; y < h; y += step)
+    for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let x = 0; x < left; x += step)
+    for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let x = right + 1; x < w; x += step)
+    for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  const ratio = total > 0 ? bg / total : 0
+  return { bgRatio: Math.round(ratio * 100) / 100, isBackground: ratio >= 0.9 }
+}
+
+function detectFlushEdges(edges, w, h) {
+  const flush = []
+  if (edges.top <= 0) flush.push('top')
+  if (edges.bottom >= h - 1) flush.push('bottom')
+  if (edges.left <= 0) flush.push('left')
+  if (edges.right >= w - 1) flush.push('right')
+  return { flush, hasFlush: flush.length > 0 }
+}
+
+async function scanImage(file) {
+  const img = await createImageBitmap(file)
+  const w = img.width
+  const h = img.height
+
+  // Draw to canvas and get pixel data
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(img, 0, 0)
+  const imageData = ctx.getImageData(0, 0, w, h)
+  const data = imageData.data
+  const ch = 4 // RGBA
+
+  // Edge detection
+  const edges = detectCardEdges(data, w, h, ch)
+
+  // DPI from image metadata if available (from createImageBitmap)
+  // Fallback: infer from card content vs reference
+  let dpi = null
+  let dpiSource = 'metadata'
+  if (img.dpi && img.dpi[0] >= 100) {
+    dpi = Math.round(img.dpi[0])
+  } else {
+    dpiSource = 'inferred'
+    if (edges.found) {
+      const isPortrait = edges.cardHeight >= edges.cardWidth
+      const wDpi = (edges.cardWidth / REF_CARD_WIDTH_600) * REF_DPI
+      const hDpi = (edges.cardHeight / REF_CARD_HEIGHT_600) * REF_DPI
+      dpi = Math.round((wDpi + hDpi) / 2)
+    } else {
+      dpi = 600 // fallback
     }
   }
-  updateBatchBar()
-}
 
-function renderScanResult(scan) {
-  const { file, div, zone, position, result: r } = scan
-  const zoneLabel = zone === 'front' ? 'Front' : zone === 'back' ? 'Back' : `Additional #${position - 1}`
+  const dimensions = edges.found ? validateCardDimensions(edges, dpi) : null
+  const flushEdges = edges.found ? detectFlushEdges(edges, w, h) : null
+  const background = edges.found ? validateBackground(data, w, h, ch, edges) : { bgRatio: 0, isBackground: false }
 
-  if (r.passed) {
-    const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
-    const preview = div.querySelector('.scan-preview')
-    if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="processed"><div class="scan-preview-label">Processed</div>`
-    let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
-    html += `<div class="scan-filename">${file.name}</div>`
-    html += `<div class="scan-status ready">✓ Passed</div>`
-    html += `<div class="scan-check-grid">`
-    html += `<span class="scan-label">DPI:</span><span class="scan-value scan-pass">${r.imageDpi}</span>`
-    html += `<span class="scan-label">Card:</span><span class="scan-value">${r.cardWidth}×${r.cardHeight}</span>`
-    html += `<span class="scan-label">Size:</span><span class="scan-value">${(r.size / 1024).toFixed(1)}KB</span>`
-    html += `</div>`
-    if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
-    html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
-    div.querySelector('.scan-info').innerHTML = html
-  } else {
-    let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
-    html += `<div class="scan-filename">${file.name}</div>`
-    html += `<div class="scan-status fail">✗ Failed</div>`
-    if (r.imageDpi) html += `<div class="scan-check-grid"><span class="scan-label">DPI:</span><span class="scan-value scan-fail">${r.imageDpi}</span></div>`
-    for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
-    if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
-    html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Dismiss</button></div>`
-    div.querySelector('.scan-info').innerHTML = html
+  const passed = edges.found && dpi >= MIN_DPI && dimensions && dimensions.valid
+
+  // Crop + JPEG conversion
+  let uploadBuffer = null
+  let uploadHash = null
+  let uploadSize = 0
+
+  if (passed) {
+    const maxMargin = Math.round(edges.cardWidth * MAX_MARGIN_RATIO)
+    const cropLeft = edges.left > maxMargin ? edges.left - maxMargin : 0
+    const cropTop = edges.top > maxMargin ? edges.top - maxMargin : 0
+    const cropRight = (w - edges.right - 1) > maxMargin ? edges.right + maxMargin : w
+    const cropBottom = (h - edges.bottom - 1) > maxMargin ? edges.bottom + maxMargin : h
+
+    const cropW = cropRight - cropLeft
+    const cropH = cropBottom - cropTop
+
+    const cropCanvas = document.createElement('canvas')
+    cropCanvas.width = cropW
+    cropCanvas.height = cropH
+    const cropCtx = cropCanvas.getContext('2d')
+    cropCtx.drawImage(img, cropLeft, cropTop, cropW, cropH, 0, 0, cropW, cropH)
+
+    const blob = await new Promise(r => cropCanvas.toBlob(r, 'image/jpeg', JPEG_QUALITY))
+    uploadBuffer = new Uint8Array(await blob.arrayBuffer())
+    const hashBuf = await crypto.subtle.digest('SHA-256', uploadBuffer)
+    uploadHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+    uploadSize = uploadBuffer.length
+  }
+
+  // Original hash
+  const fileBuf = new Uint8Array(await file.arrayBuffer())
+  const origHashBuf = await crypto.subtle.digest('SHA-256', fileBuf)
+  const originalHash = Array.from(new Uint8Array(origHashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+
+  const warnings = []
+  if (flushEdges && flushEdges.hasFlush) warnings.push(`Card is flush with image edge (${flushEdges.flush.join(', ')}) — verify card is not cut off`)
+  if (edges.found && !background.isBackground) warnings.push(`Background not uniform (${Math.round(background.bgRatio * 100)}%) — scanner bed may have debris`)
+
+  const failures = []
+  if (!edges.found) failures.push('Card edges not detected')
+  if (edges.found && dpi < MIN_DPI) failures.push(`Scanner DPI ${dpi} (minimum ${MIN_DPI})`)
+  if (edges.found && dimensions && !dimensions.valid) failures.push(dimensions.reason)
+
+  return {
+    passed,
+    hash: uploadHash || originalHash,
+    originalHash,
+    width: w,
+    height: h,
+    size: uploadSize || file.size,
+    originalSize: file.size,
+    imageDpi: dpi,
+    cardWidth: edges.cardWidth,
+    cardHeight: edges.cardHeight,
+    uploadBuffer,
+    warnings,
+    failures,
+    checks: {
+      resolution: dpi >= MIN_DPI,
+      cardDetected: edges.found,
+      dimensions: dimensions ? dimensions.valid : false
+    }
   }
 }
 
-function removeScan(zone, position) {
-  if (zone === 'front') {
-    if (cardState.front) { cardState.front.div.remove(); cardState.front = null }
-  } else if (zone === 'back') {
-    if (cardState.back) { cardState.back.div.remove(); cardState.back = null }
-  } else {
-    const idx = cardState.extra.findIndex(s => s.position === position)
-    if (idx >= 0) { cardState.extra[idx].div.remove(); cardState.extra.splice(idx, 1) }
+async function handleFiles(fileList) {
+  const files = Array.from(fileList)
+  if (files.length === 0) return
+
+  const resultsDiv = document.getElementById('upload-results')
+  const batchBar = document.getElementById('upload-batch-bar')
+  const summaryDiv = document.getElementById('upload-summary')
+  summaryDiv.classList.add('hidden')
+
+  for (const file of files) {
+    const idx = scans.length
+    const div = document.createElement('div')
+    div.className = 'scan-result analyzing'
+    const imgUrl = URL.createObjectURL(file)
+    div.innerHTML = `
+      <div class="scan-preview"><img src="${imgUrl}" alt="original" style="opacity:0.5"></div>
+      <div class="scan-info">
+        <div class="scan-filename">${file.name}</div>
+        <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
+        <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+      </div>
+    `
+    resultsDiv.appendChild(div)
+    scans.push({ file, div, scanId: null, result: null })
+    analyzeFile(idx)
   }
-  updateBatchBar()
 }
 
-function getAllScans() {
-  return [cardState.front, cardState.back, ...cardState.extra].filter(s => s !== null)
+async function analyzeFile(idx) {
+  const scan = scans[idx]
+  if (!scan) return
+  const { file, div } = scan
+
+  try {
+    const r = await scanImage(file)
+    scan.result = r
+    scan.uploadBuffer = r.uploadBuffer
+    div.classList.remove('analyzing')
+    div.classList.add(r.passed ? 'ready' : 'failed')
+
+    if (r.passed) {
+      // Show processed preview
+      const blob = new Blob([r.uploadBuffer], { type: 'image/jpeg' })
+      const preview = div.querySelector('.scan-preview')
+      if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="processed"><div class="scan-preview-label">Processed</div>`
+      let html = `<div class="scan-filename">${file.name}</div>`
+      html += `<div class="scan-status ready">✓ Validation passed</div>`
+      html += `<div class="scan-check-grid">`
+      html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-pass">${r.imageDpi} DPI</span>`
+      html += `<span class="scan-label">Card size:</span><span class="scan-value">${r.cardWidth}×${r.cardHeight} px</span>`
+      html += `<span class="scan-label">Upload size:</span><span class="scan-value">${(r.size / 1024).toFixed(1)}KB</span>`
+      html += `</div>`
+      if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+      html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Remove</button></div>`
+      div.querySelector('.scan-info').innerHTML = html
+    } else {
+      let html = `<div class="scan-filename">${file.name}</div>`
+      html += `<div class="scan-status fail">✗ Validation failed</div>`
+      html += `<div class="scan-check-grid">`
+      if (r.imageDpi) html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-fail">${r.imageDpi} DPI</span>`
+      html += `</div>`
+      html += `<div class="scan-fail-text">Failures:</div>`
+      for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
+      if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+      html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Dismiss</button></div>`
+      div.querySelector('.scan-info').innerHTML = html
+    }
+    updateBatchBar()
+  } catch (err) {
+    div.classList.remove('analyzing')
+    div.classList.add('failed')
+    div.querySelector('.scan-info').innerHTML = `<div class="scan-filename">${file.name}</div><div class="scan-status fail">✗ Error: ${err.message}</div>`
+    updateBatchBar()
+  }
+}
+
+function removeScan(idx) {
+  const scan = scans[idx]
+  if (!scan) return
+  scan.div.remove()
+  scans[idx] = null
+  updateBatchBar()
 }
 
 function updateBatchBar() {
   const batchBar = document.getElementById('upload-batch-bar')
   const batchInfo = document.getElementById('upload-batch-info')
   const btnUploadAll = document.getElementById('btn-upload-all')
-  const resetBtn = document.getElementById('upload-reset-btn')
   if (!batchBar) return
 
-  const all = getAllScans()
-  if (all.length === 0) {
-    batchBar.classList.add('hidden')
-    resetBtn.style.display = 'none'
-    return
-  }
-  batchBar.classList.remove('hidden')
-  resetBtn.style.display = 'block'
+  const active = scans.filter(s => s !== null)
+  const passed = active.filter(s => s.result && s.result.passed)
+  const failed = active.filter(s => s.result && !s.result.passed)
+  const analyzing = active.filter(s => !s.result)
 
-  const passed = all.filter(s => s.result && s.result.passed)
-  const failed = all.filter(s => s.result && !s.result.passed)
-  const analyzing = all.filter(s => !s.result)
+  if (active.length === 0) { batchBar.classList.add('hidden'); return }
+  batchBar.classList.remove('hidden')
 
   if (analyzing.length > 0) {
     batchInfo.innerHTML = `Analyzing ${analyzing.length} image(s)...`
     btnUploadAll.disabled = true
   } else if (failed.length > 0) {
-    batchInfo.innerHTML = `<strong>${passed.length}</strong> passed, <strong>${failed.length}</strong> failed — fix or remove failed images`
+    batchInfo.innerHTML = `<strong>${passed.length}</strong> passed, <strong>${failed.length}</strong> failed — fix or remove failed images to upload`
     btnUploadAll.disabled = true
   } else if (passed.length > 0) {
     if (passed.length === 1) {
-      batchInfo.innerHTML = `<strong>1</strong> image ready (front only — no CARDSET)`
+      batchInfo.innerHTML = `<strong>1</strong> image ready to upload`
       btnUploadAll.textContent = 'Upload to BSV'
     } else {
-      batchInfo.innerHTML = `<strong>${passed.length}</strong> images ready — linked via CARDSET`
-      btnUploadAll.textContent = 'Upload Card to BSV'
+      batchInfo.innerHTML = `<strong>${passed.length}</strong> images ready — will be uploaded and linked via CARDSET`
+      btnUploadAll.textContent = 'Upload All to BSV'
     }
     btnUploadAll.disabled = false
   } else {
@@ -414,20 +578,9 @@ function updateBatchBar() {
   }
 }
 
-function resetCard() {
-  if (cardState.front) { cardState.front.div.remove(); cardState.front = null }
-  if (cardState.back) { cardState.back.div.remove(); cardState.back = null }
-  cardState.extra.forEach(s => s.div.remove())
-  cardState.extra = []
-  document.getElementById('upload-summary').classList.add('hidden')
-  document.getElementById('upload-batch-bar').classList.add('hidden')
-  document.getElementById('upload-reset-btn').style.display = 'none'
-}
-
 async function uploadAll() {
   const btnUploadAll = document.getElementById('btn-upload-all')
-  const all = getAllScans()
-  const passed = all.filter(s => s.result && s.result.passed && s.uploadBuffer)
+  const passed = scans.filter(s => s && s.result && s.result.passed && s.uploadBuffer)
   if (passed.length === 0) return
 
   btnUploadAll.disabled = true
@@ -438,28 +591,25 @@ async function uploadAll() {
     scan.div.classList.add('uploading')
     scan.div.querySelector('.scan-status').className = 'scan-status uploading'
     scan.div.querySelector('.scan-status').innerHTML = '<span class="scan-spinner"></span>Uploading...'
-    scan.div.querySelectorAll('.scan-btn-remove').forEach(b => b.disabled = true)
+    scan.div.querySelectorAll('.scan-btn-cancel').forEach(b => b.disabled = true)
   }
 
   try {
     const formData = new FormData()
     for (const scan of passed) {
       const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
-      const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
-      formData.append('files', blob, filename)
+      formData.append('files', blob, scan.file.name.replace(/\.[^.]+$/, '.jpg'))
     }
 
     const res = await fetch(`${API}/upload-all`, { method: 'POST', body: formData })
     const data = await res.json()
 
     for (const scan of passed) {
-      const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
-      const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
+      const upload = data.uploaded && data.uploaded.find(u => u.filename === scan.file.name.replace(/\.[^.]+$/, '.jpg'))
       if (upload) {
         scan.div.classList.remove('uploading')
         scan.div.classList.add('passed')
-        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : scan.zone === 'back' ? 'Back' : `Additional #${scan.position - 1}`}</div>`
-        html += `<div class="scan-filename">${upload.filename}</div>`
+        let html = `<div class="scan-filename">${upload.filename}</div>`
         html += `<div class="scan-status pass">✓ Uploaded</div>`
         html += `<div class="scan-detail">`
         html += `<span class="scan-label">TXID:</span> <span class="scan-txid">${upload.txid}</span><br>`
@@ -469,7 +619,7 @@ async function uploadAll() {
         html += `</div>`
         scan.div.querySelector('.scan-info').innerHTML = html
       } else {
-        const err = data.errors && data.errors.find(e => e.filename === filename)
+        const err = data.errors && data.errors.find(e => e.filename === scan.file.name.replace(/\.[^.]+$/, '.jpg'))
         scan.div.classList.remove('uploading')
         scan.div.classList.add('failed')
         scan.div.querySelector('.scan-status').className = 'scan-status fail'
@@ -477,9 +627,10 @@ async function uploadAll() {
       }
     }
 
+    // Show summary
     const summaryDiv = document.getElementById('upload-summary')
     if (data.uploaded && data.uploaded.length > 0) {
-      let html = '<div class="upload-summary-title">✓ Card uploaded</div>'
+      let html = '<div class="upload-summary-title">✓ Batch complete</div>'
       html += `<div class="scan-detail">`
       html += `<strong>${data.uploaded.length}</strong> image(s) uploaded`
       if (data.cardset) {
@@ -509,7 +660,7 @@ async function uploadAll() {
     }
     document.getElementById('upload-batch-info').innerHTML = '✗ Upload error: ' + err.message
     btnUploadAll.disabled = false
-    btnUploadAll.textContent = 'Upload Card to BSV'
+    btnUploadAll.textContent = 'Upload All to BSV'
   }
 }
 

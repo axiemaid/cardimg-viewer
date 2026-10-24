@@ -30,47 +30,23 @@
           <span class="page-stats" id="stats-bar"><span id="stat-count">—</span> uploads</span>
         </div>
 
-        <!-- Card upload zones -->
+        <!-- Scanner upload zone -->
         <div id="upload-zone">
-          <div class="card-upload-header">
-            <h2>Upload a Card</h2>
-            <div class="upload-wallet-status" id="upload-wallet-status"></div>
+          <div class="upload-dropzone" id="upload-dropzone">
+            <div class="upload-dropzone-inner">
+              <div class="upload-icon">📷</div>
+              <div class="upload-hint">Click to select or drag & drop card scans</div>
+              <div class="upload-sub-hint">Multiple images in one batch are linked via CARDSET · fees paid by explorer wallet</div>
+            </div>
+            <input type="file" id="upload-input" multiple accept="image/*" style="display:none" />
           </div>
-          <div class="card-upload-zones">
-            <div class="card-zone" data-zone="front">
-              <div class="card-zone-label">Front</div>
-              <div class="card-zone-required">Required</div>
-              <div class="card-zone-drop" id="zone-front">
-                <div class="card-zone-placeholder">Drop or click</div>
-                <input type="file" accept="image/*" style="display:none" />
-              </div>
-            </div>
-            <div class="card-zone" data-zone="back">
-              <div class="card-zone-label">Back</div>
-              <div class="card-zone-optional">Optional</div>
-              <div class="card-zone-drop" id="zone-back">
-                <div class="card-zone-placeholder">Drop or click</div>
-                <input type="file" accept="image/*" style="display:none" />
-              </div>
-            </div>
-            <div class="card-zone" data-zone="extra">
-              <div class="card-zone-label">Additional</div>
-              <div class="card-zone-optional">Angles, surface, holo…</div>
-              <div class="card-zone-drop" id="zone-extra">
-                <div class="card-zone-placeholder">Drop or click</div>
-                <input type="file" accept="image/*" multiple style="display:none" />
-              </div>
-            </div>
-          </div>
+          <div class="upload-wallet-status" id="upload-wallet-status"></div>
           <div id="upload-results" class="scan-results"></div>
           <div id="upload-batch-bar" class="scan-batch-bar hidden">
             <div class="scan-batch-info" id="upload-batch-info"></div>
-            <button class="scan-btn-upload-all" id="btn-upload-all" disabled>Upload Card to BSV</button>
+            <button class="scan-btn-upload-all" id="btn-upload-all" disabled>Upload All to BSV</button>
           </div>
           <div id="upload-summary" class="scan-summary hidden"></div>
-          <div class="upload-reset">
-            <button class="upload-reset-btn" id="upload-reset-btn" style="display:none">Start New Card</button>
-          </div>
         </div>
 
         <div id="loading" class="loading">
