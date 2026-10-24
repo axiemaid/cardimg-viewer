@@ -651,7 +651,7 @@ footer .sep { margin: 0 0.5rem; }
 
 .viewer-appears-link:hover { color: var(--accent-hover) !important; }
 
-/* --- Scanner Upload Zone --- */
+/* --- Card Upload Zones --- */
 
 #upload-zone {
   max-width: 1200px;
@@ -659,7 +659,9 @@ footer .sep { margin: 0 0.5rem; }
   padding: 0 0 1.5rem;
 }
 
-.upload-dropzone {
+/* Collapsed: upload toggle button */
+
+.upload-toggle {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
   padding: 2.5rem 2rem;
@@ -669,16 +671,72 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev);
 }
 
-.upload-dropzone:hover,
-.upload-dropzone.dragover {
+.upload-toggle:hover {
   border-color: var(--accent);
   background: var(--bg-elev2);
 }
 
-.upload-dropzone-inner { pointer-events: none; }
-.upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-.upload-hint { font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; }
-.upload-sub-hint { font-size: 0.78rem; color: var(--text-faint); }
+.upload-toggle-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+}
+
+/* Expanded: front + back zones */
+
+.card-upload-zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.card-zone-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.card-zone-required {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.card-zone-optional {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+.card-zone-drop {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg-elev);
+}
+
+.card-zone-drop:hover,
+.card-zone-drop.dragover {
+  border-color: var(--accent);
+  background: var(--bg-elev2);
+}
+
+.card-zone-placeholder {
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
 
 .upload-wallet-status {
   font-size: 0.78rem;
@@ -743,7 +801,7 @@ footer .sep { margin: 0 0.5rem; }
 .scan-fail-text { color: #f66; font-size: 0.82rem; }
 
 .scan-actions { margin-top: 0.5rem; display: flex; gap: 0.5rem; }
-.scan-btn-cancel {
+.scan-btn-remove {
   background: var(--bg-elev2);
   color: var(--text-dim);
   padding: 6px 16px;
@@ -752,8 +810,19 @@ footer .sep { margin: 0 0.5rem; }
   cursor: pointer;
   font-size: 0.82rem;
 }
-.scan-btn-cancel:hover { background: var(--border); color: var(--text); }
-.scan-btn-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+.scan-btn-remove:hover { background: var(--border); color: var(--text); }
+.scan-btn-remove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.scan-zone-tag {
+  display: inline-block;
+  background: var(--bg-elev2);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 0.35rem;
+}
 
 .scan-spinner {
   display: inline-block;
@@ -791,6 +860,7 @@ footer .sep { margin: 0 0.5rem; }
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 .scan-btn-upload-all:hover { background: #5b5; }
 .scan-btn-upload-all:disabled { background: var(--bg-elev2); color: var(--text-faint); cursor: not-allowed; }
@@ -813,6 +883,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 @media (max-width: 768px) {
+  .card-upload-zones { grid-template-columns: 1fr; }
   #topbar {
     padding: 0.6rem 1rem;
     gap: 0.6rem;

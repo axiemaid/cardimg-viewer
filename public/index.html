@@ -30,15 +30,30 @@
           <span class="page-stats" id="stats-bar"><span id="stat-count">—</span> uploads</span>
         </div>
 
-        <!-- Scanner upload zone -->
+        <!-- Card upload zones -->
         <div id="upload-zone">
-          <div class="upload-dropzone" id="upload-dropzone">
-            <div class="upload-dropzone-inner">
-              <div class="upload-icon">📷</div>
-              <div class="upload-hint">Click to select or drag & drop card scans</div>
-              <div class="upload-sub-hint">Multiple images in one batch are linked via CARDSET · fees paid by explorer wallet</div>
+          <!-- Collapsed: upload button -->
+          <div class="upload-toggle" id="upload-toggle">
+            <span class="upload-toggle-text">+ Upload a Card</span>
+          </div>
+          <!-- Expanded: front + back zones -->
+          <div class="card-upload-zones" id="card-upload-zones" style="display:none">
+            <div class="card-zone" data-zone="front">
+              <div class="card-zone-label">Front</div>
+              <div class="card-zone-required">Required</div>
+              <div class="card-zone-drop" id="zone-front">
+                <div class="card-zone-placeholder">Drop or click</div>
+                <input type="file" accept="image/*" style="display:none" />
+              </div>
             </div>
-            <input type="file" id="upload-input" multiple accept="image/*" style="display:none" />
+            <div class="card-zone" data-zone="back">
+              <div class="card-zone-label">Back</div>
+              <div class="card-zone-optional">Optional</div>
+              <div class="card-zone-drop" id="zone-back">
+                <div class="card-zone-placeholder">Drop or click</div>
+                <input type="file" accept="image/*" style="display:none" />
+              </div>
+            </div>
           </div>
           <div class="upload-wallet-status" id="upload-wallet-status"></div>
           <div id="upload-results" class="scan-results"></div>
