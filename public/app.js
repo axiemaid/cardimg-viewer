@@ -493,27 +493,26 @@ function parseOcrCardCode(rawText) {
   return null
 }
 
-// Validate front card via OCR on the bottom-left code region
+// Validate front card via OCR — tries all 4 corners to handle rotated cards
 async function validateFrontCard(cropCtx, cropW, cropH) {
-  // Code is at ~3-18% width, ~92-98% height of the card
-  const codeLeft = Math.floor(cropW * 0.03)
-  const codeTop = Math.floor(cropH * 0.92)
+  // Code region is ~15% width × 6% height, from a corner inward
   const codeW = Math.floor(cropW * 0.15)
   const codeH = Math.floor(cropH * 0.06)
   if (codeW < 10 || codeH < 5) return { code: null, reason: 'Card too small for OCR region' }
 
-  // Get grayscale pixel data for the code region
-  const regionData = cropCtx.getImageData(codeLeft, codeTop, codeW, codeH)
-  // Convert to grayscale
-  const gray = new Uint8Array(codeW * codeH)
-  for (let i = 0; i < codeW * codeH; i++) {
-    const r = regionData.data[i * 4]
-    const g = regionData.data[i * 4 + 1]
-    const b = regionData.data[i * 4 + 2]
-    gray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
-  }
+  // 4 corner positions: bottom-left, bottom-right, top-left, top-right
+  // Card code could be in any corner depending on rotation
+  const corners = [
+    { name: 'bottom-left',  left: Math.floor(cropW * 0.03), top: Math.floor(cropH * 0.92) },
+    { name: 'bottom-right', left: Math.floor(cropW * 0.82), top: Math.floor(cropH * 0.92) },
+    { name: 'top-left',     left: Math.floor(cropW * 0.03), top: Math.floor(cropH * 0.02) },
+    { name: 'top-right',    left: Math.floor(cropW * 0.82), top: Math.floor(cropH * 0.02) },
+  ]
 
-  // Try multiple parameter combos, pick best valid result
+  // Also try rotated versions of the card for sideways scans
+  const rotations = [0, 90, 180, 270]
+
+  // OCR parameter combos
   const params = [
     { bin: 80, dens: 0.20, psm: '7' },
     { bin: 80, dens: 0.25, psm: '7' },
@@ -527,44 +526,91 @@ async function validateFrontCard(cropCtx, cropW, cropH) {
   let bestCode = null
   let bestConfidence = -1
 
-  for (const { bin, dens, psm } of params) {
-    const mask = densityFilter(gray, codeW, codeH, bin, dens)
-    // Build canvas from mask, upscale for OCR
-    const maskCanvas = document.createElement('canvas')
-    const scale = 6
-    maskCanvas.width = codeW * scale
-    maskCanvas.height = codeH * scale
-    const maskCtx = maskCanvas.getContext('2d')
-    const imgData = maskCtx.createImageData(codeW, codeH)
-    for (let i = 0; i < codeW * codeH; i++) {
-      const val = mask[i] ? 0 : 255
-      imgData.data[i * 4] = val
-      imgData.data[i * 4 + 1] = val
-      imgData.data[i * 4 + 2] = val
-      imgData.data[i * 4 + 3] = 255
-    }
-    // Put image data then upscale
-    const tempCanvas = document.createElement('canvas')
-    tempCanvas.width = codeW
-    tempCanvas.height = codeH
-    const tempCtx = tempCanvas.getContext('2d')
-    tempCtx.putImageData(imgData, 0, 0)
-    maskCtx.imageSmoothingEnabled = false
-    maskCtx.drawImage(tempCanvas, 0, 0, codeW * scale, codeH * scale)
-    // Run Tesseract
-    try {
-      const result = await Tesseract.recognize(maskCanvas, 'eng', {
-        tessedit_char_whitelist: 'CS0123456789-',
-        tessedit_pageseg_mode: psm
-      })
-      const code = parseOcrCardCode(result.data.text)
-      if (code && result.data.confidence > bestConfidence) {
-        bestCode = code
-        bestConfidence = result.data.confidence
+  // Try each rotation
+  for (const rot of rotations) {
+    // Create a rotated copy of the crop canvas
+    let workCanvas, workW, workH
+    if (rot === 0) {
+      workCanvas = cropCtx.canvas
+      workW = cropW
+      workH = cropH
+    } else {
+      workCanvas = document.createElement('canvas')
+      if (rot === 90 || rot === 270) {
+        workCanvas.width = cropH
+        workCanvas.height = cropW
+      } else {
+        workCanvas.width = cropW
+        workCanvas.height = cropH
       }
-    } catch (e) {
-      // OCR attempt failed, try next combo
+      const wCtx = workCanvas.getContext('2d')
+      wCtx.translate(workCanvas.width / 2, workCanvas.height / 2)
+      wCtx.rotate(rot * Math.PI / 180)
+      wCtx.drawImage(cropCtx.canvas, -cropW / 2, -cropH / 2)
+      workW = workCanvas.width
+      workH = workCanvas.height
     }
+    const wCtx = workCanvas.getContext('2d', { willReadFrequently: true })
+
+    // Try bottom-left corner of this rotation
+    const cLeft = Math.floor(workW * 0.03)
+    const cTop = Math.floor(workH * 0.92)
+    const cW = Math.floor(workW * 0.15)
+    const cH = Math.floor(workH * 0.06)
+    if (cW < 10 || cH < 5) continue
+
+    // Get grayscale pixel data for the code region
+    const regionData = wCtx.getImageData(cLeft, cTop, cW, cH)
+    const gray = new Uint8Array(cW * cH)
+    for (let i = 0; i < cW * cH; i++) {
+      const r = regionData.data[i * 4]
+      const g = regionData.data[i * 4 + 1]
+      const b = regionData.data[i * 4 + 2]
+      gray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
+    }
+
+    // Try each parameter combo
+    for (const { bin, dens, psm } of params) {
+      const mask = densityFilter(gray, cW, cH, bin, dens)
+      // Build canvas from mask, upscale for OCR
+      const scale = 6
+      const maskCanvas = document.createElement('canvas')
+      maskCanvas.width = cW * scale
+      maskCanvas.height = cH * scale
+      const maskCtx = maskCanvas.getContext('2d')
+      const imgData = maskCtx.createImageData(cW, cH)
+      for (let i = 0; i < cW * cH; i++) {
+        const val = mask[i] ? 0 : 255
+        imgData.data[i * 4] = val
+        imgData.data[i * 4 + 1] = val
+        imgData.data[i * 4 + 2] = val
+        imgData.data[i * 4 + 3] = 255
+      }
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = cW
+      tempCanvas.height = cH
+      const tempCtx = tempCanvas.getContext('2d')
+      tempCtx.putImageData(imgData, 0, 0)
+      maskCtx.imageSmoothingEnabled = false
+      maskCtx.drawImage(tempCanvas, 0, 0, cW * scale, cH * scale)
+      // Run Tesseract
+      try {
+        const result = await Tesseract.recognize(maskCanvas, 'eng', {
+          tessedit_char_whitelist: 'CS0123456789-',
+          tessedit_pageseg_mode: psm
+        })
+        const code = parseOcrCardCode(result.data.text)
+        if (code && result.data.confidence > bestConfidence) {
+          bestCode = code
+          bestConfidence = result.data.confidence
+        }
+      } catch (e) {
+        // OCR attempt failed, try next combo
+      }
+    }
+
+    // If we found a code at this rotation, no need to try more rotations
+    if (bestCode) break
   }
 
   return { code: bestCode, confidence: bestConfidence }
