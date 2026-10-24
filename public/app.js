@@ -646,7 +646,10 @@ async function uploadAll() {
       formData.append('files', blob, filename)
     }
 
-    const res = await fetch(`${API}/upload-all`, { method: 'POST', body: formData })
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 300000) // 5 min timeout
+    const res = await fetch(`${API}/upload-all`, { method: 'POST', body: formData, signal: controller.signal })
+    clearTimeout(timeout)
     const data = await res.json()
 
     for (const scan of passed) {
@@ -698,10 +701,11 @@ async function uploadAll() {
     loadCards(true).catch(() => {})
     loadWalletStatus().catch(() => {})
   } catch (err) {
+    const errMsg = err.name === 'AbortError' ? 'Upload timed out — check upload log, images may still be processing' : err.message
     for (const scan of passed) {
       if (scan.summaryDiv) {
         let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
-        html += `<div class="scan-status fail">✗ Error: ${err.message}</div>`
+        html += `<div class="scan-status fail">✗ Error: ${errMsg}</div>`
         scan.summaryDiv.innerHTML = html
       }
     }
