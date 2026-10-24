@@ -669,6 +669,8 @@ footer .sep { margin: 0 0.5rem; }
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
   background: var(--bg-elev);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .upload-toggle:hover {
