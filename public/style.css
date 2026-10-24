@@ -691,7 +691,7 @@ footer .sep { margin: 0 0.5rem; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  max-width: 500px;
+  max-width: 750px;
   margin: 0 auto;
 }
 
@@ -882,11 +882,13 @@ footer .sep { margin: 0 0.5rem; }
   color: #fff;
   padding: 10px 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
   white-space: nowrap;
+  width: 100%;
+  margin-top: 0.75rem;
 }
 .scan-btn-upload-all:hover { background: #5b5; }
 .scan-btn-upload-all:disabled { background: var(--bg-elev2); color: var(--text-faint); cursor: not-allowed; }
