@@ -928,6 +928,12 @@ footer .sep { margin: 0 0.5rem; }
     gap: 2rem;
     max-width: 600px;
   }
+  .scan-btn-upload-all,
+  .upload-wallet-status {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 @media (max-width: 1100px) {
