@@ -662,34 +662,37 @@ footer .sep { margin: 0 0.5rem; }
 /* Collapsed: upload toggle button */
 
 .upload-toggle {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: var(--accent);
-  color: #fff;
+  background: #fff;
+  color: #0d0d0f;
   border: none;
   border-radius: var(--radius);
-  padding: 0.7rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
   user-select: none;
   transition: background 0.15s, transform 0.1s;
   margin-top: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .upload-toggle:hover {
-  background: var(--accent-hover);
+  background: #e0e0e0;
 }
 
 .upload-toggle:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .upload-toggle-text {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #fff;
+  color: #0d0d0f;
   user-select: none;
 }
 
