@@ -481,9 +481,9 @@ async function matchFrontCard(cropCanvas) {
   const best = scores[0]
   const second = scores[1]
 
-  // Real scans land at 56-105 MAE vs clean references.
-  // Separation requirement removed — 42 designs have similar color palettes.
   // Tuned from actual scan data 2026-10-25.
+  // Raw MAE works better than normalized — brightness differences between
+  // cards are discriminative signal, not just noise.
   const MATCH_THRESHOLD = 110
   const matched = best.mae <= MATCH_THRESHOLD
 
