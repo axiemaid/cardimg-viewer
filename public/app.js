@@ -622,15 +622,12 @@ function updateBatchBar() {
   } else if (failed.length > 0) {
     batchInfo.innerHTML = `<strong>${passed.length}</strong> passed, <strong>${failed.length}</strong> failed — fix or remove failed images`
     btnUploadAll.disabled = true
-  } else if (passed.length > 0) {
-    if (passed.length === 1) {
-      batchInfo.innerHTML = `<strong>1</strong> image ready (front only — no CARDSET)`
-      btnUploadAll.textContent = 'Upload to BSV'
-    } else {
-      batchInfo.innerHTML = `<strong>${passed.length}</strong> images ready — linked via CARDSET`
-      btnUploadAll.textContent = 'Upload Card to BSV'
-    }
+  } else if (passed.length === 2) {
+    batchInfo.innerHTML = `<strong>Front + Back</strong> ready — linked via CARDSET`
     btnUploadAll.disabled = false
+  } else if (passed.length === 1) {
+    batchInfo.innerHTML = `Front only — add back image to link via CARDSET`
+    btnUploadAll.disabled = true
   } else {
     batchInfo.innerHTML = 'No images ready'
     btnUploadAll.disabled = true
