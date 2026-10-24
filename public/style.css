@@ -318,7 +318,7 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .set-card-txid {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
