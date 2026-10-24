@@ -654,7 +654,7 @@ footer .sep { margin: 0 0.5rem; }
 /* --- Card Upload Zones --- */
 
 #upload-zone {
-  max-width: 640px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 0 1.5rem;
 }
