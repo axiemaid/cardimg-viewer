@@ -701,8 +701,8 @@ footer .sep { margin: 0 0.5rem; }
 .card-upload-zones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  max-width: 600px;
+  gap: 1rem;
+  max-width: 750px;
   margin: 0 auto;
 }
 
@@ -714,7 +714,7 @@ footer .sep { margin: 0 0.5rem; }
 .card-zone-drop {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  aspect-ratio: 4/5;
+  aspect-ratio: 3/4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -921,6 +921,17 @@ footer .sep { margin: 0 0.5rem; }
 .upload-summary-title { color: #4a4; font-weight: 600; font-size: 1.05rem; margin-bottom: 0.5rem; }
 
 /* --- Responsive --- */
+
+/* Desktop-only upload zone tweaks */
+@media (min-width: 769px) {
+  .card-upload-zones {
+    gap: 2rem;
+    max-width: 600px;
+  }
+  .card-zone-drop {
+    aspect-ratio: 4/5;
+  }
+}
 
 @media (max-width: 1100px) {
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
