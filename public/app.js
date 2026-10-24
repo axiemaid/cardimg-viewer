@@ -493,15 +493,14 @@ function parseOcrCardCode(rawText) {
   return null
 }
 
-// Validate front card via OCR — tries all 4 corners to handle rotated cards
+// Validate front card via OCR — scans 4 corners × 4 rotations
 async function validateFrontCard(cropCtx, cropW, cropH) {
-  // Code region is ~15% width × 6% height, from a corner inward
+  // Code region is ~15% width × 8% height, from a corner inward
   const codeW = Math.floor(cropW * 0.15)
-  const codeH = Math.floor(cropH * 0.06)
+  const codeH = Math.floor(cropH * 0.08)
   if (codeW < 10 || codeH < 5) return { code: null, reason: 'Card too small for OCR region' }
 
-  // 4 corner positions: bottom-left, bottom-right, top-left, top-right
-  // Card code could be in any corner depending on rotation
+  // 4 corner positions on the card
   const corners = [
     { name: 'bottom-left',  left: Math.floor(cropW * 0.03), top: Math.floor(cropH * 0.92) },
     { name: 'bottom-right', left: Math.floor(cropW * 0.82), top: Math.floor(cropH * 0.92) },
@@ -512,7 +511,7 @@ async function validateFrontCard(cropCtx, cropW, cropH) {
   // Also try rotated versions of the card for sideways scans
   const rotations = [0, 90, 180, 270]
 
-  // OCR parameter combos
+  // OCR parameter combos — density filter for halftone removal
   const params = [
     { bin: 80, dens: 0.20, psm: '7' },
     { bin: 80, dens: 0.25, psm: '7' },
@@ -526,7 +525,6 @@ async function validateFrontCard(cropCtx, cropW, cropH) {
   let bestCode = null
   let bestConfidence = -1
 
-  // Try each rotation
   for (const rot of rotations) {
     // Create a rotated copy of the crop canvas
     let workCanvas, workW, workH
@@ -552,65 +550,64 @@ async function validateFrontCard(cropCtx, cropW, cropH) {
     }
     const wCtx = workCanvas.getContext('2d', { willReadFrequently: true })
 
-    // Try bottom-left corner of this rotation
-    const cLeft = Math.floor(workW * 0.03)
-    const cTop = Math.floor(workH * 0.92)
-    const cW = Math.floor(workW * 0.15)
-    const cH = Math.floor(workH * 0.06)
-    if (cW < 10 || cH < 5) continue
+    // Try all 4 corners at this rotation
+    for (const corner of corners) {
+      const cLeft = corner.left
+      const cTop = corner.top
+      const cW = codeW
+      const cH = codeH
+      if (cLeft + cW > workW || cTop + cH > workH) continue
 
-    // Get grayscale pixel data for the code region
-    const regionData = wCtx.getImageData(cLeft, cTop, cW, cH)
-    const gray = new Uint8Array(cW * cH)
-    for (let i = 0; i < cW * cH; i++) {
-      const r = regionData.data[i * 4]
-      const g = regionData.data[i * 4 + 1]
-      const b = regionData.data[i * 4 + 2]
-      gray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
-    }
-
-    // Try each parameter combo
-    for (const { bin, dens, psm } of params) {
-      const mask = densityFilter(gray, cW, cH, bin, dens)
-      // Build canvas from mask, upscale for OCR
-      const scale = 6
-      const maskCanvas = document.createElement('canvas')
-      maskCanvas.width = cW * scale
-      maskCanvas.height = cH * scale
-      const maskCtx = maskCanvas.getContext('2d')
-      const imgData = maskCtx.createImageData(cW, cH)
+      // Get grayscale pixel data for the code region
+      const regionData = wCtx.getImageData(cLeft, cTop, cW, cH)
+      const gray = new Uint8Array(cW * cH)
       for (let i = 0; i < cW * cH; i++) {
-        const val = mask[i] ? 0 : 255
-        imgData.data[i * 4] = val
-        imgData.data[i * 4 + 1] = val
-        imgData.data[i * 4 + 2] = val
-        imgData.data[i * 4 + 3] = 255
+        const r = regionData.data[i * 4]
+        const g = regionData.data[i * 4 + 1]
+        const b = regionData.data[i * 4 + 2]
+        gray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
       }
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width = cW
-      tempCanvas.height = cH
-      const tempCtx = tempCanvas.getContext('2d')
-      tempCtx.putImageData(imgData, 0, 0)
-      maskCtx.imageSmoothingEnabled = false
-      maskCtx.drawImage(tempCanvas, 0, 0, cW * scale, cH * scale)
-      // Run Tesseract
-      try {
-        const result = await Tesseract.recognize(maskCanvas, 'eng', {
-          tessedit_char_whitelist: 'CS0123456789-',
-          tessedit_pageseg_mode: psm
-        })
-        const code = parseOcrCardCode(result.data.text)
-        if (code && result.data.confidence > bestConfidence) {
-          bestCode = code
-          bestConfidence = result.data.confidence
+
+      // Try each parameter combo
+      for (const { bin, dens, psm } of params) {
+        const mask = densityFilter(gray, cW, cH, bin, dens)
+        const scale = 6
+        const maskCanvas = document.createElement('canvas')
+        maskCanvas.width = cW * scale
+        maskCanvas.height = cH * scale
+        const maskCtx = maskCanvas.getContext('2d')
+        const imgData = maskCtx.createImageData(cW, cH)
+        for (let i = 0; i < cW * cH; i++) {
+          const val = mask[i] ? 0 : 255
+          imgData.data[i * 4] = val
+          imgData.data[i * 4 + 1] = val
+          imgData.data[i * 4 + 2] = val
+          imgData.data[i * 4 + 3] = 255
         }
-      } catch (e) {
-        // OCR attempt failed, try next combo
+        const tempCanvas = document.createElement('canvas')
+        tempCanvas.width = cW
+        tempCanvas.height = cH
+        const tempCtx = tempCanvas.getContext('2d')
+        tempCtx.putImageData(imgData, 0, 0)
+        maskCtx.imageSmoothingEnabled = false
+        maskCtx.drawImage(tempCanvas, 0, 0, cW * scale, cH * scale)
+        try {
+          const result = await Tesseract.recognize(maskCanvas, 'eng', {
+            tessedit_char_whitelist: 'CS0123456789-',
+            tessedit_pageseg_mode: psm
+          })
+          const code = parseOcrCardCode(result.data.text)
+          if (code && result.data.confidence > bestConfidence) {
+            bestCode = code
+            bestConfidence = result.data.confidence
+          }
+        } catch (e) {}
       }
+
+      if (bestCode) break // found at this corner, stop
     }
 
-    // If we found a code at this rotation, no need to try more rotations
-    if (bestCode) break
+    if (bestCode) break // found at this rotation, stop
   }
 
   return { code: bestCode, confidence: bestConfidence }
@@ -690,29 +687,12 @@ async function scanImage(file) {
     const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true })
     cropCtx.drawImage(img, cropLeft, cropTop, cropW, cropH, 0, 0, cropW, cropH)
 
-    // --- Hyper Battle card validation ---
-    if (zoneName === 'back') {
-      const backCheck = validateBackCard(cropCtx, cropW, cropH)
-      if (!backCheck.isBack) {
-        failures.push(`Not a card back — brown design not detected (${Math.round(backCheck.brownRatio * 100)}% brown pixels)`)
-      }
-    } else if (zoneName === 'front') {
-      const frontCheck = await validateFrontCard(cropCtx, cropW, cropH)
-      if (!frontCheck.code) {
-        failures.push('Not a Hyper Battle card front — no valid card code (C01–C34, S01–S08) detected')
-      } else {
-        warnings.push(`Card code: ${frontCheck.code}`)
-      }
-    }
-
-    // Only proceed to JPEG if all validations passed
-    if (failures.length === 0) {
-      const blob = await new Promise(r => cropCanvas.toBlob(r, 'image/jpeg', JPEG_QUALITY))
-      uploadBuffer = new Uint8Array(await blob.arrayBuffer())
-      const hashBuf = await crypto.subtle.digest('SHA-256', uploadBuffer)
-      uploadHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
-      uploadSize = uploadBuffer.length
-    }
+    // --- JPEG conversion ---
+    const blob = await new Promise(r => cropCanvas.toBlob(r, 'image/jpeg', JPEG_QUALITY))
+    uploadBuffer = new Uint8Array(await blob.arrayBuffer())
+    const hashBuf = await crypto.subtle.digest('SHA-256', uploadBuffer)
+    uploadHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+    uploadSize = uploadBuffer.length
   }
 
   // Original hash
