@@ -727,7 +727,7 @@ footer .sep { margin: 0 0.5rem; }
 
 .card-zone-drop:hover,
 .card-zone-drop.dragover {
-  border-color: var(--accent);
+  border-color: #fff;
   background: var(--bg-elev2);
 }
 
