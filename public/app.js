@@ -418,6 +418,83 @@ function validateBackCard(cropCtx, cropW, cropH) {
   return { brownRatio: Math.round(ratio * 100) / 100, isBack: ratio >= 0.50 }
 }
 
+// --- Front card reference matching (client-side pixel comparison) ---
+
+const MATCH_THUMB_W = 64
+const MATCH_THUMB_H = 96
+let referenceThumbs = null  // Array of { code, data: Uint8Array(RGB) }
+
+async function loadReferenceThumbs() {
+  if (referenceThumbs) return referenceThumbs
+  try {
+    const res = await fetch(`${API}/references/fronts`)
+    const data = await res.json()
+    referenceThumbs = []
+    for (const thumb of data.thumbs) {
+      // Decode base64 JPEG → canvas → raw RGB
+      const img = await createImageBitmap(await (await fetch(thumb.data)).blob())
+      const c = document.createElement('canvas')
+      c.width = MATCH_THUMB_W
+      c.height = MATCH_THUMB_H
+      const ctx = c.getContext('2d')
+      ctx.drawImage(img, 0, 0, MATCH_THUMB_W, MATCH_THUMB_H)
+      const imgData = ctx.getImageData(0, 0, MATCH_THUMB_W, MATCH_THUMB_H)
+      referenceThumbs.push({ code: thumb.code, data: new Uint8Array(imgData.data) })
+    }
+    console.log(`[front-match] Loaded ${referenceThumbs.length} reference thumbnails`)
+  } catch (e) {
+    console.error('[front-match] Failed to load references:', e)
+  }
+  return referenceThumbs
+}
+
+function computeMAE(a, b) {
+  let sum = 0
+  const len = a.length
+  for (let i = 0; i < len; i++) sum += Math.abs(a[i] - b[i])
+  return sum / len
+}
+
+async function matchFrontCard(cropCanvas) {
+  const refs = await loadReferenceThumbs()
+  if (!refs || refs.length === 0) {
+    return { matched: false, code: null, error: 'References not loaded' }
+  }
+
+  // Downscale crop to thumbnail size
+  const c = document.createElement('canvas')
+  c.width = MATCH_THUMB_W
+  c.height = MATCH_THUMB_H
+  const ctx = c.getContext('2d')
+  ctx.drawImage(cropCanvas, 0, 0, MATCH_THUMB_W, MATCH_THUMB_H)
+  const imgData = ctx.getImageData(0, 0, MATCH_THUMB_W, MATCH_THUMB_H)
+  const input = new Uint8Array(imgData.data)
+
+  // Compare against all 42 references
+  const scores = []
+  for (const ref of refs) {
+    const mae = computeMAE(input, ref.data)
+    scores.push({ code: ref.code, mae })
+  }
+  scores.sort((a, b) => a.mae - b.mae)
+
+  const best = scores[0]
+  const second = scores[1]
+
+  const MATCH_THRESHOLD = 60
+  const SEPARATION_MIN = 15
+  const matched = best.mae <= MATCH_THRESHOLD && (second.mae - best.mae) >= SEPARATION_MIN
+
+  return {
+    matched,
+    code: matched ? best.code : null,
+    mae: Math.round(best.mae * 100) / 100,
+    secondBest: { code: second.code, mae: Math.round(second.mae * 100) / 100 },
+    separation: Math.round((second.mae - best.mae) * 100) / 100,
+    topMatches: scores.slice(0, 5).map(s => ({ code: s.code, mae: Math.round(s.mae * 100) / 100 }))
+  }
+}
+
 // --- Main scan function ---
 
 async function scanImage(file) {
@@ -515,6 +592,17 @@ async function scanImage(file) {
       const backCheck = validateBackCard(portraitCtx, portraitW, portraitH)
       if (!backCheck.isBack) {
         failures.push(`Not a card back — brown design not detected (${Math.round(backCheck.brownRatio * 100)}% brown)`)
+      }
+    } else if (zoneName === 'front') {
+      const frontCheck = await matchFrontCard(portraitCanvas)
+      if (!frontCheck.matched) {
+        if (frontCheck.error) {
+          warnings.push(`Front match skipped: ${frontCheck.error}`)
+        } else {
+          failures.push(`Front not recognized as any known card design (best: ${frontCheck.topMatches[0]?.code} @ MAE ${frontCheck.mae})`)
+        }
+      } else {
+        warnings.push(`Card code: ${frontCheck.code}`)
       }
     }
 
@@ -631,7 +719,11 @@ function renderScanResult(scan) {
     if (r.orientation) {
       html += `<div class="scan-detail" style="margin-top:0.3rem">${r.orientation} · ${r.imageDpi} DPI</div>`
     }
-    // (OCR card code detection removed — was unreliable for front cards)
+    // (Front card code from reference matching)
+    const codeWarning = r.warnings.find(w => w.startsWith('Card code:'))
+    if (codeWarning) {
+      html += `<div class="scan-detail">${codeWarning}</div>`
+    }
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     summaryDiv.innerHTML = html
   } else {
