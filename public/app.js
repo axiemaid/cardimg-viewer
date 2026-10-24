@@ -700,7 +700,7 @@ async function uploadAll() {
           }
 
           btnUploadAll.disabled = false
-          btnUploadAll.textContent = 'Upload Card to BSV'
+          btnUploadAll.textContent = 'Upload Images'
 
           // Refresh gallery + stats
           loadStats().catch(() => {})
@@ -721,7 +721,7 @@ async function uploadAll() {
       }
     }
     btnUploadAll.disabled = false
-    btnUploadAll.textContent = 'Upload Card to BSV'
+    btnUploadAll.textContent = 'Upload Images'
   }
 }
 
