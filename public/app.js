@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial route
   loadCardReference()
   loadStats()
+  loadWalletStatus()
+  initUploadZone()
   handleRoute()
 })
 
@@ -189,6 +191,113 @@ async function loadStats() {
     const data = await res.json()
     document.getElementById('stat-count').textContent = data.totalImages.toLocaleString()
   } catch (e) {}
+}
+
+// --- Upload Zone ---
+
+async function loadWalletStatus() {
+  const el = document.getElementById('upload-wallet-status')
+  if (!el) return
+  try {
+    const res = await fetch(`${API}/wallet/status`)
+    const info = await res.json()
+    if (!info.configured) {
+      el.textContent = 'Explorer wallet not configured'
+      el.className = 'upload-wallet-status none'
+      return
+    }
+    const bal = info.balance
+    if (!bal || bal.total < 5000) {
+      el.textContent = `Wallet low: ${bal ? bal.total.toLocaleString() : 0} sats — ${info.address}`
+      el.className = 'upload-wallet-status low'
+    } else {
+      el.textContent = `Wallet: ${bal.total.toLocaleString()} sats · ${info.utxos} UTXOs`
+      el.className = 'upload-wallet-status'
+    }
+  } catch (e) {
+    el.textContent = 'Wallet status unavailable'
+    el.className = 'upload-wallet-status'
+  }
+}
+
+function initUploadZone() {
+  const dropzone = document.getElementById('upload-dropzone')
+  const input = document.getElementById('upload-input')
+  if (!dropzone || !input) return
+
+  dropzone.addEventListener('click', () => input.click())
+  input.addEventListener('change', () => {
+    if (input.files[0]) handleUpload(input.files[0])
+    input.value = ''
+  })
+
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault()
+    dropzone.classList.add('dragover')
+  })
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover')
+  })
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault()
+    dropzone.classList.remove('dragover')
+    const file = e.dataTransfer.files[0]
+    if (file) handleUpload(file)
+  })
+}
+
+let uploading = false
+
+async function handleUpload(file) {
+  if (uploading) return
+  uploading = true
+
+  const container = document.getElementById('upload-result-container')
+  container.innerHTML = `
+    <div class="upload-progress">
+      <div class="spinner"></div>
+      <span>Uploading to BSV…</span>
+    </div>
+  `
+
+  const formData = new FormData()
+  formData.append('image', file)
+
+  try {
+    const res = await fetch(`${API}/upload`, {
+      method: 'POST',
+      body: formData
+    })
+    const data = await res.json()
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+
+    const sizeKB = (data.size / 1024).toFixed(1)
+    container.innerHTML = `
+      <div class="upload-result success">
+        <div class="upload-result-title success">✓ Uploaded to chain</div>
+        <div class="upload-result-details">
+          TXID: <a href="https://whatsonchain.com/tx/${data.txid}" target="_blank" rel="noopener">${data.txid}</a><br>
+          Size: ${sizeKB} KB · Fee: ${data.fee} sats · TX size: ${data.txSize} bytes
+        </div>
+        <img class="upload-result-preview" src="${API}/img/${data.hash}" alt="Uploaded image" />
+      </div>
+    `
+    loadStats()
+    loadCards(true)
+    loadWalletStatus()
+  } catch (e) {
+    container.innerHTML = `
+      <div class="upload-result error">
+        <div class="upload-result-title error">✗ Upload failed</div>
+        <div class="upload-result-details">${e.message}</div>
+      </div>
+    `
+  } finally {
+    uploading = false
+  }
 }
 
 // --- Uploads Gallery ---

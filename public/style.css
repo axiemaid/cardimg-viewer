@@ -651,6 +651,131 @@ footer .sep { margin: 0 0.5rem; }
 
 .viewer-appears-link:hover { color: var(--accent-hover) !important; }
 
+/* --- Upload Zone --- */
+
+#upload-zone {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0 1.5rem;
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg-elev);
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--bg-elev2);
+}
+
+.upload-dropzone-inner {
+  pointer-events: none;
+}
+
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.upload-hint {
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.upload-browse-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.upload-sub-hint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.upload-wallet-status {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.upload-wallet-status.low {
+  color: #fbbf24;
+}
+
+.upload-wallet-status.none {
+  color: #ef4444;
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.upload-progress .spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.upload-result {
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.upload-result.success {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.upload-result.error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.upload-result-title {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.upload-result-title.success { color: var(--accent); }
+.upload-result-title.error { color: #ef4444; }
+
+.upload-result-details {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.upload-result-details a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.upload-result-details a:hover { color: var(--accent-hover); }
+
+.upload-result-preview {
+  margin-top: 0.75rem;
+  max-width: 200px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 1100px) {

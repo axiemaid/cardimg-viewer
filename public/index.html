@@ -29,6 +29,21 @@
           <h1>Newest Uploads</h1>
           <span class="page-stats" id="stats-bar"><span id="stat-count">—</span> uploads</span>
         </div>
+
+        <!-- Upload zone -->
+        <div id="upload-zone">
+          <div class="upload-dropzone" id="upload-dropzone">
+            <div class="upload-dropzone-inner">
+              <div class="upload-icon">📤</div>
+              <div class="upload-hint">Drop image or <span class="upload-browse-link">browse</span></div>
+              <div class="upload-sub-hint">PNG, JPEG, WebP, GIF · max 10MB · paid by explorer wallet</div>
+            </div>
+            <input type="file" id="upload-input" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none" />
+          </div>
+          <div class="upload-wallet-status" id="upload-wallet-status"></div>
+          <div id="upload-result-container"></div>
+        </div>
+
         <div id="loading" class="loading">
           <div class="spinner"></div>
           <p>Loading uploads from chain…</p>
