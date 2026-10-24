@@ -209,7 +209,7 @@ const MIN_DPI = 500
 const BLACK_THRESHOLD = 30
 const WHITE_THRESHOLD = 225
 const CONTENT_SAT_THRESHOLD = 0.08
-const JPEG_QUALITY = 0.90
+const JPEG_QUALITY = 0.70
 const MAX_MARGIN_RATIO = 0.05
 
 async function loadWalletStatus() {
