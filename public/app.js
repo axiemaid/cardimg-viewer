@@ -431,7 +431,6 @@ async function loadReferenceThumbs() {
     const data = await res.json()
     referenceThumbs = []
     for (const thumb of data.thumbs) {
-      // Decode base64 JPEG → canvas → raw RGB
       const img = await createImageBitmap(await (await fetch(thumb.data)).blob())
       const c = document.createElement('canvas')
       c.width = MATCH_THUMB_W
@@ -461,7 +460,6 @@ async function matchFrontCard(cropCanvas) {
     return { matched: false, code: null, error: 'References not loaded' }
   }
 
-  // Downscale crop to thumbnail size
   const c = document.createElement('canvas')
   c.width = MATCH_THUMB_W
   c.height = MATCH_THUMB_H
@@ -470,7 +468,6 @@ async function matchFrontCard(cropCanvas) {
   const imgData = ctx.getImageData(0, 0, MATCH_THUMB_W, MATCH_THUMB_H)
   const input = new Uint8Array(imgData.data)
 
-  // Compare against all 42 references
   const scores = []
   for (const ref of refs) {
     const mae = computeMAE(input, ref.data)
@@ -482,8 +479,6 @@ async function matchFrontCard(cropCanvas) {
   const second = scores[1]
 
   // Tuned from actual scan data 2026-10-25.
-  // Raw MAE works better than normalized — brightness differences between
-  // cards are discriminative signal, not just noise.
   const MATCH_THRESHOLD = 110
   const matched = best.mae <= MATCH_THRESHOLD
 
@@ -596,15 +591,21 @@ async function scanImage(file) {
         failures.push(`Not a card back — brown design not detected (${Math.round(backCheck.brownRatio * 100)}% brown)`)
       }
     } else if (zoneName === 'front') {
-      const frontCheck = await matchFrontCard(portraitCanvas)
-      if (!frontCheck.matched) {
-        if (frontCheck.error) {
-          warnings.push(`Front match skipped: ${frontCheck.error}`)
-        } else {
-          failures.push(`Front not recognized as any known card design (best: ${frontCheck.topMatches[0]?.code} @ MAE ${frontCheck.mae})`)
-        }
+      // Pre-check: reject if this looks like a card back (brown)
+      const backCheck = validateBackCard(portraitCtx, portraitW, portraitH)
+      if (backCheck.isBack) {
+        failures.push(`This looks like a card back, not a front — upload it as the back`)
       } else {
-        warnings.push(`Card code: ${frontCheck.code}`)
+        const frontCheck = await matchFrontCard(portraitCanvas)
+        if (!frontCheck.matched) {
+          if (frontCheck.error) {
+            warnings.push(`Front match skipped: ${frontCheck.error}`)
+          } else {
+            failures.push(`Front not recognized as any known card design (best: ${frontCheck.topMatches[0]?.code} @ MAE ${frontCheck.mae})`)
+          }
+        } else {
+          warnings.push(`Card code: ${frontCheck.code}`)
+        }
       }
     }
 
