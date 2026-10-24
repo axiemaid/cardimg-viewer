@@ -731,6 +731,11 @@ footer .sep { margin: 0 0.5rem; }
   background: var(--bg-elev2);
 }
 
+.card-zone-drop.passed {
+  border-color: #4a4;
+  border-style: solid;
+}
+
 .card-zone-placeholder {
   color: var(--text-faint);
   font-size: 3rem;

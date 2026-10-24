@@ -558,6 +558,7 @@ function renderScanResult(scan) {
       img.style.opacity = '1'
       img.alt = `${zoneLabel} processed`
     }
+    zoneDiv.classList.add('passed')
     let html = `<div class="scan-status ready">Ready</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     summaryDiv.innerHTML = html
@@ -572,12 +573,14 @@ function renderScanResult(scan) {
 function removeScan(zone, position) {
   if (zone === 'front') {
     if (cardState.front) {
+      cardState.front.zoneDiv.classList.remove('passed')
       cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><input type="file" accept="image/*" style="display:none" />'
       cardState.front.summaryDiv.innerHTML = '<div class="card-zone-label">Front</div>'
       cardState.front = null
     }
   } else if (zone === 'back') {
     if (cardState.back) {
+      cardState.back.zoneDiv.classList.remove('passed')
       cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><input type="file" accept="image/*" style="display:none" />'
       cardState.back.summaryDiv.innerHTML = '<div class="card-zone-label">Back</div>'
       cardState.back = null
