@@ -705,6 +705,7 @@ async function scanImage(file) {
     imageDpi: dpi,
     cardWidth: edges.cardWidth,
     cardHeight: edges.cardHeight,
+    orientation: dimensions ? dimensions.orientation : (edges.found ? (edges.cardHeight >= edges.cardWidth ? 'portrait' : 'landscape') : null),
     uploadBuffer,
     warnings,
     failures,
@@ -781,10 +782,14 @@ function renderScanResult(scan) {
     }
     zoneDiv.classList.add('passed')
     let html = `<div class="scan-status ready">Ready</div>`
+    // Show orientation + DPI info
+    if (r.orientation) {
+      html += `<div class="scan-detail" style="margin-top:0.3rem">${r.orientation} · ${r.imageDpi} DPI</div>`
+    }
     // Show card code if detected (front cards)
     const codeWarning = r.warnings.find(w => w.startsWith('Card code:'))
     if (codeWarning) {
-      html += `<div class="scan-detail" style="margin-top:0.3rem">${codeWarning}</div>`
+      html += `<div class="scan-detail">${codeWarning}</div>`
     }
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     summaryDiv.innerHTML = html
