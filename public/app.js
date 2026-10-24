@@ -383,14 +383,6 @@ function detectFlushEdges(edges, w, h) {
 
 // --- Hyper Battle card validation ---
 
-const VALID_CARD_CODES = new Set([
-  'C01','C02','C03','C04','C05','C06','C07','C08','C09','C10',
-  'C11','C12','C13','C14','C15','C16','C17','C18','C19','C20',
-  'C21','C22','C23','C24','C25','C26','C27','C28','C29','C30',
-  'C31','C32','C33','C34',
-  'S01','S02','S03','S04','S05','S06','S07','S08'
-])
-
 // Brown back card color range — warm, moderate brightness, low-moderate saturation
 function isBrownPixel(p) {
   const maxC = Math.max(p.r, p.g, p.b)
@@ -424,146 +416,6 @@ function validateBackCard(cropCtx, cropW, cropH) {
   }
   const ratio = sampled > 0 ? brown / sampled : 0
   return { brownRatio: Math.round(ratio * 100) / 100, isBack: ratio >= 0.50 }
-}
-
-// Density filter for halftone removal (ported from cardimg-identifier)
-function densityFilter(data, w, h, binThresh, densityThresh) {
-  const binary = new Uint8Array(w * h)
-  for (let i = 0; i < w * h; i++) {
-    binary[i] = data[i] < binThresh ? 1 : 0
-  }
-  const filtered = new Uint8Array(w * h)
-  const radius = 3
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x
-      let count = 0, total = 0
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const nx = x + dx, ny = y + dy
-          if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-            total++
-            if (binary[ny * w + nx]) count++
-          }
-        }
-      }
-      filtered[idx] = (count / total > densityThresh) ? 1 : 0
-    }
-  }
-  return filtered
-}
-
-// Parse OCR text to find a valid card code
-function parseOcrCardCode(rawText) {
-  const noSpace = rawText.replace(/\s+/g, '')
-  const cleaned = noSpace
-    .replace(/O(?=\d)/gi, 'C')
-    .replace(/5(?=\d)/gi, 'S')
-    .replace(/SU6/gi, 'S06')
-    .replace(/SU0/gi, 'S06')
-    .replace(/S0U/gi, 'S06')
-    .replace(/SOG/gi, 'S06')
-    .replace(/SQ/gi, 'S0')
-    .replace(/S00/gi, 'S06')
-    .replace(/S0G/gi, 'S06')
-    .replace(/G(?=\d)/gi, '6')
-    .replace(/Q(?=\d)/gi, '0')
-    .replace(/U/gi, '0')
-  const match = cleaned.match(/([CS])(\d{2})/i)
-  if (match) {
-    const letter = match[1].toUpperCase()
-    const num = match[2]
-    const code = `${letter}${num}`
-    if (VALID_CARD_CODES.has(code)) return code
-    const alt = letter === 'C' ? 'S' : 'C'
-    const altCode = `${alt}${num}`
-    if (VALID_CARD_CODES.has(altCode)) return altCode
-  }
-  const rejoined = noSpace.replace(/O(?=\d)/gi, 'C').replace(/5(?=\d)/gi, 'S').replace(/\s+/g, '')
-  const match2 = rejoined.match(/([CS])(\d{2})/i)
-  if (match2) {
-    const letter = match2[1].toUpperCase()
-    const num = match2[2]
-    const code = `${letter}${num}`
-    if (VALID_CARD_CODES.has(code)) return code
-    const alt = letter === 'C' ? 'S' : 'C'
-    const altCode = `${alt}${num}`
-    if (VALID_CARD_CODES.has(altCode)) return altCode
-  }
-  return null
-}
-
-// Validate front card via OCR — uses same approach as cardimg-identifier
-// Input: portrait-oriented cropped card (portraitCtx, portraitW, portraitH)
-async function validateFrontCard(portraitCtx, portraitW, portraitH) {
-  // Code is at ~3-18% width, ~92-98% height (bottom-left of portrait card)
-  const codeLeft = Math.floor(portraitW * 0.03)
-  const codeTop = Math.floor(portraitH * 0.92)
-  const codeW = Math.floor(portraitW * 0.15)
-  const codeH = Math.floor(portraitH * 0.06)
-  if (codeW < 10 || codeH < 5) return { code: null, confidence: -1 }
-
-  // Get grayscale pixel data for the code region
-  const regionData = portraitCtx.getImageData(codeLeft, codeTop, codeW, codeH)
-  const gray = new Uint8Array(codeW * codeH)
-  for (let i = 0; i < codeW * codeH; i++) {
-    const r = regionData.data[i * 4]
-    const g = regionData.data[i * 4 + 1]
-    const b = regionData.data[i * 4 + 2]
-    gray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
-  }
-
-  // Try multiple parameter combos (same as cardimg-identifier)
-  const params = [
-    { bin: 80, dens: 0.20, psm: '7' },
-    { bin: 80, dens: 0.25, psm: '7' },
-    { bin: 80, dens: 0.30, psm: '7' },
-    { bin: 100, dens: 0.25, psm: '7' },
-    { bin: 100, dens: 0.30, psm: '7' },
-    { bin: 80, dens: 0.20, psm: '8' },
-    { bin: 80, dens: 0.25, psm: '8' },
-  ]
-
-  let bestCode = null
-  let bestConfidence = -1
-
-  for (const { bin, dens, psm } of params) {
-    const mask = densityFilter(gray, codeW, codeH, bin, dens)
-    // Build canvas from mask, upscale 6x for OCR
-    const scale = 6
-    const maskCanvas = document.createElement('canvas')
-    maskCanvas.width = codeW * scale
-    maskCanvas.height = codeH * scale
-    const maskCtx = maskCanvas.getContext('2d')
-    const imgData = maskCtx.createImageData(codeW, codeH)
-    for (let i = 0; i < codeW * codeH; i++) {
-      const val = mask[i] ? 0 : 255
-      imgData.data[i * 4] = val
-      imgData.data[i * 4 + 1] = val
-      imgData.data[i * 4 + 2] = val
-      imgData.data[i * 4 + 3] = 255
-    }
-    const tempCanvas = document.createElement('canvas')
-    tempCanvas.width = codeW
-    tempCanvas.height = codeH
-    const tempCtx = tempCanvas.getContext('2d')
-    tempCtx.putImageData(imgData, 0, 0)
-    maskCtx.imageSmoothingEnabled = false
-    maskCtx.drawImage(tempCanvas, 0, 0, codeW * scale, codeH * scale)
-    try {
-      const result = await Tesseract.recognize(maskCanvas, 'eng', {
-        tessedit_char_whitelist: 'CS0123456789-',
-        tessedit_pageseg_mode: psm
-      })
-      const code = parseOcrCardCode(result.data.text)
-      if (code && result.data.confidence > bestConfidence) {
-        bestCode = code
-        bestConfidence = result.data.confidence
-      }
-    } catch (e) {}
-  }
-
-  return { code: bestCode, confidence: bestConfidence }
 }
 
 // --- Main scan function ---
@@ -664,13 +516,6 @@ async function scanImage(file) {
       if (!backCheck.isBack) {
         failures.push(`Not a card back — brown design not detected (${Math.round(backCheck.brownRatio * 100)}% brown)`)
       }
-    } else if (zoneName === 'front') {
-      const frontCheck = await validateFrontCard(portraitCtx, portraitW, portraitH)
-      if (!frontCheck.code) {
-        failures.push('No valid Hyper Battle card code (C01–C34, S01–S08) detected')
-      } else {
-        warnings.push(`Card code: ${frontCheck.code}`)
-      }
     }
 
     // Only proceed to JPEG if all validations passed
@@ -739,7 +584,7 @@ function createScanEntry(zoneName, file, position) {
 
   // Summary goes in the summary area
   if (summaryDiv) {
-    const processingLabel = zoneName === 'front' ? 'Scanning + OCR...' : 'Scanning...'
+    const processingLabel = 'Scanning...'
     summaryDiv.innerHTML = `
       <div class="scan-status analyzing"><span class="scan-spinner"></span>${processingLabel}</div>
       <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
@@ -786,11 +631,7 @@ function renderScanResult(scan) {
     if (r.orientation) {
       html += `<div class="scan-detail" style="margin-top:0.3rem">${r.orientation} · ${r.imageDpi} DPI</div>`
     }
-    // Show card code if detected (front cards)
-    const codeWarning = r.warnings.find(w => w.startsWith('Card code:'))
-    if (codeWarning) {
-      html += `<div class="scan-detail">${codeWarning}</div>`
-    }
+    // (OCR card code detection removed — was unreliable for front cards)
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     summaryDiv.innerHTML = html
   } else {
