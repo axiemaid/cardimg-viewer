@@ -656,32 +656,40 @@ footer .sep { margin: 0 0.5rem; }
 #upload-zone {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 0 1.5rem;
+  padding: 1rem 0 1.5rem;
 }
 
 /* Collapsed: upload toggle button */
 
 .upload-toggle {
-  border: 2px dashed var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
   border-radius: var(--radius);
-  padding: 2.5rem 2rem;
-  text-align: center;
+  padding: 0.7rem 1.5rem;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  background: var(--bg-elev);
-  max-width: 1400px;
-  margin: 0 auto;
+  font-size: 0.95rem;
+  font-weight: 600;
+  user-select: none;
+  transition: background 0.15s, transform 0.1s;
+  margin-top: 1.5rem;
 }
 
 .upload-toggle:hover {
-  border-color: var(--accent);
-  background: var(--bg-elev2);
+  background: var(--accent-hover);
+}
+
+.upload-toggle:active {
+  transform: scale(0.98);
 }
 
 .upload-toggle-text {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text);
+  color: #fff;
   user-select: none;
 }
 
@@ -780,7 +788,9 @@ footer .sep { margin: 0 0.5rem; }
   color: var(--text-faint);
   margin-top: 0.5rem;
   text-align: center;
+  display: none;
 }
+.upload-wallet-status.visible { display: block; }
 .upload-wallet-status.low { color: #fbbf24; }
 .upload-wallet-status.none { color: #ef4444; }
 
@@ -889,7 +899,9 @@ footer .sep { margin: 0 0.5rem; }
   white-space: nowrap;
   width: 100%;
   margin-top: 0.75rem;
+  display: none;
 }
+.scan-btn-upload-all.visible { display: block; }
 .scan-btn-upload-all:hover { background: #5b5; }
 .scan-btn-upload-all:disabled { background: var(--bg-elev2); color: var(--text-faint); cursor: not-allowed; }
 

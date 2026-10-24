@@ -240,10 +240,14 @@ async function loadWalletStatus() {
 function initUploadZone() {
   const toggle = document.getElementById('upload-toggle')
   const zonesContainer = document.getElementById('card-upload-zones')
+  const walletStatus = document.getElementById('upload-wallet-status')
+  const uploadBtn = document.getElementById('btn-upload-all')
   if (toggle && zonesContainer) {
     toggle.addEventListener('click', () => {
       toggle.style.display = 'none'
       zonesContainer.style.display = ''
+      if (walletStatus) walletStatus.classList.add('visible')
+      if (uploadBtn) uploadBtn.classList.add('visible')
     })
   }
 
