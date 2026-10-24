@@ -27,12 +27,8 @@
       <main id="gallery" class="view active">
         <!-- Card upload zones -->
         <div id="upload-zone">
-          <!-- Collapsed: upload button -->
-          <div class="upload-toggle" id="upload-toggle">
-            <span class="upload-toggle-text">+ Upload a Card</span>
-          </div>
-          <!-- Expanded: front + back zones -->
-          <div class="card-upload-zones" id="card-upload-zones" style="display:none">
+          <!-- Front + back zones -->
+          <div class="card-upload-zones" id="card-upload-zones">
             <div class="card-zone" data-zone="front">
               <div class="card-zone-drop" id="zone-front">
                 <div class="card-zone-placeholder">+</div>
@@ -52,8 +48,8 @@
               </div>
             </div>
           </div>
-          <div class="upload-wallet-status" id="upload-wallet-status"></div>
-          <button class="scan-btn-upload-all" id="btn-upload-all" disabled>Upload Images</button>
+          <div class="upload-wallet-status visible" id="upload-wallet-status"></div>
+          <button class="scan-btn-upload-all visible" id="btn-upload-all" disabled>Upload Images</button>
           <div id="upload-summary" class="scan-summary hidden"></div>
         </div>
 
