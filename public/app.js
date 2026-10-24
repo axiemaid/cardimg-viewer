@@ -486,10 +486,16 @@ async function scanImage(file) {
 function handleFileDrop(zoneName, file) {
   // Front and back: single slot, replace existing
   if (zoneName === 'front') {
-    if (cardState.front) cardState.front.div.remove()
+    if (cardState.front) {
+      cardState.front.div.remove()
+      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+    }
     cardState.front = createScanEntry(zoneName, file, 0)
   } else if (zoneName === 'back') {
-    if (cardState.back) cardState.back.div.remove()
+    if (cardState.back) {
+      cardState.back.div.remove()
+      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+    }
     cardState.back = createScanEntry(zoneName, file, 1)
   }
   analyzeCard()
@@ -501,10 +507,9 @@ function createScanEntry(zoneName, file, position) {
   div.className = 'scan-result analyzing'
   div.dataset.zone = zoneName
   div.dataset.position = position
-  const imgUrl = URL.createObjectURL(file)
   const zoneLabel = zoneName === 'front' ? 'Front' : 'Back'
   div.innerHTML = `
-    <div class="scan-preview"><img src="${imgUrl}" alt="original" style="opacity:0.5"></div>
+    <div class="scan-preview"><img src="${URL.createObjectURL(file)}" alt="original" style="opacity:0.5"></div>
     <div class="scan-info">
       <div class="scan-zone-tag">${zoneLabel}</div>
       <div class="scan-filename">${file.name}</div>
@@ -513,7 +518,21 @@ function createScanEntry(zoneName, file, position) {
     </div>
   `
   resultsDiv.appendChild(div)
-  return { file, div, position, zone: zoneName, result: null, uploadBuffer: null }
+
+  // Show preview inside the drop zone
+  const zoneDiv = document.getElementById(`zone-${zoneName}`)
+  zoneDiv.innerHTML = ''
+  const preview = document.createElement('img')
+  preview.className = 'card-zone-preview'
+  preview.src = URL.createObjectURL(file)
+  preview.alt = `${zoneLabel} preview`
+  zoneDiv.appendChild(preview)
+  const badge = document.createElement('div')
+  badge.className = 'card-zone-badge analyzing'
+  badge.textContent = '⋯'
+  zoneDiv.appendChild(badge)
+
+  return { file, div, zoneDiv, badge, position, zone: zoneName, result: null, uploadBuffer: null }
 }
 
 async function analyzeCard() {
@@ -538,11 +557,19 @@ async function analyzeCard() {
 }
 
 function renderScanResult(scan) {
-  const { file, div, zone, position, result: r } = scan
+  const { file, div, zone, position, zoneDiv, badge, result: r } = scan
   const zoneLabel = zone === 'front' ? 'Front' : 'Back'
 
   if (r.passed) {
+    // Swap zone preview to processed image
     const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
+    const oldPreview = zoneDiv.querySelector('.card-zone-preview')
+    if (oldPreview) {
+      oldPreview.src = URL.createObjectURL(blob)
+      oldPreview.alt = `${zoneLabel} processed`
+    }
+    if (badge) { badge.className = 'card-zone-badge pass'; badge.textContent = '✓' }
+
     const preview = div.querySelector('.scan-preview')
     if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="processed"><div class="scan-preview-label">Processed</div>`
     let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
@@ -557,6 +584,8 @@ function renderScanResult(scan) {
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
     div.querySelector('.scan-info').innerHTML = html
   } else {
+    if (badge) { badge.className = 'card-zone-badge fail'; badge.textContent = '✗' }
+
     let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
     html += `<div class="scan-filename">${file.name}</div>`
     html += `<div class="scan-status fail">✗ Failed</div>`
@@ -570,9 +599,17 @@ function renderScanResult(scan) {
 
 function removeScan(zone, position) {
   if (zone === 'front') {
-    if (cardState.front) { cardState.front.div.remove(); cardState.front = null }
+    if (cardState.front) {
+      cardState.front.div.remove()
+      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+      cardState.front = null
+    }
   } else if (zone === 'back') {
-    if (cardState.back) { cardState.back.div.remove(); cardState.back = null }
+    if (cardState.back) {
+      cardState.back.div.remove()
+      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
+      cardState.back = null
+    }
   }
   updateBatchBar()
 }
