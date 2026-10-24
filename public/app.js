@@ -195,9 +195,21 @@ async function loadStats() {
   } catch (e) {}
 }
 
-// --- Scanner Upload Zone ---
+// --- Scanner Upload Zone (client-side processing) ---
 
 const scans = []
+
+// Scan constants — must match server-side scanner
+const REF_CARD_WIDTH_600 = 1386
+const REF_CARD_HEIGHT_600 = 2005
+const REF_DPI = 600
+const CARD_SIZE_TOLERANCE = 0.10
+const MIN_DPI = 500
+const BLACK_THRESHOLD = 30
+const WHITE_THRESHOLD = 225
+const CONTENT_SAT_THRESHOLD = 0.08
+const JPEG_QUALITY = 0.90
+const MAX_MARGIN_RATIO = 0.05
 
 async function loadWalletStatus() {
   const el = document.getElementById('upload-wallet-status')
@@ -236,6 +248,217 @@ function initUploadZone() {
   dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files) })
 }
 
+// --- Client-side scan logic ---
+
+function isBlack(p) { return p.r < BLACK_THRESHOLD && p.g < BLACK_THRESHOLD && p.b < BLACK_THRESHOLD }
+function isWhite(p) { return p.r > WHITE_THRESHOLD && p.g > WHITE_THRESHOLD && p.b > WHITE_THRESHOLD }
+function isBackground(p) { return isBlack(p) || isWhite(p) }
+
+function isContent(p) {
+  if (isBackground(p)) return false
+  const maxC = Math.max(p.r, p.g, p.b)
+  const minC = Math.min(p.r, p.g, p.b)
+  const sat = maxC === 0 ? 0 : (maxC - minC) / maxC
+  if (maxC < 50 && sat < CONTENT_SAT_THRESHOLD) return false
+  if (maxC >= 50 && maxC <= 220 && sat < CONTENT_SAT_THRESHOLD) return false
+  return true
+}
+
+function getPixel(data, w, x, y, ch) {
+  const idx = (y * w + x) * ch
+  return { r: data[idx], g: data[idx + 1], b: data[idx + 2] }
+}
+
+function detectCardEdges(data, w, h, ch) {
+  const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 100))
+  const thresholdRatio = 0.3
+
+  let top = 0
+  for (let y = 0; y < h; y += sampleStep) {
+    let cc = 0, sc = 0
+    for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { top = y; break }
+  }
+
+  let bottom = h - 1
+  for (let y = h - 1; y >= 0; y -= sampleStep) {
+    let cc = 0, sc = 0
+    for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { bottom = y; break }
+  }
+
+  let left = 0
+  for (let x = 0; x < w; x += sampleStep) {
+    let cc = 0, sc = 0
+    for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { left = x; break }
+  }
+
+  let right = w - 1
+  for (let x = w - 1; x >= 0; x -= sampleStep) {
+    let cc = 0, sc = 0
+    for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
+    if (cc / sc > thresholdRatio) { right = x; break }
+  }
+
+  const cardWidth = right - left
+  const cardHeight = bottom - top
+  return { top, bottom, left, right, cardWidth, cardHeight, found: cardWidth > 0 && cardHeight > 0 }
+}
+
+function validateCardDimensions(edges, dpi) {
+  const { cardWidth, cardHeight } = edges
+  if (cardWidth <= 0 || cardHeight <= 0) return { valid: false, reason: 'Card dimensions zero or negative' }
+
+  const isPortrait = cardHeight >= cardWidth
+  const scale = dpi / REF_DPI
+  const expectedW = Math.round((isPortrait ? REF_CARD_WIDTH_600 : REF_CARD_HEIGHT_600) * scale)
+  const expectedH = Math.round((isPortrait ? REF_CARD_HEIGHT_600 : REF_CARD_WIDTH_600) * scale)
+  const widthRatio = cardWidth / expectedW
+  const heightRatio = cardHeight / expectedH
+  const minAcceptable = 1 - CARD_SIZE_TOLERANCE
+  const valid = widthRatio >= minAcceptable && heightRatio >= minAcceptable
+
+  if (!valid) {
+    const worst = Math.min(widthRatio, heightRatio) < widthRatio ? 'height' : 'width'
+    const actual = worst === 'height' ? cardHeight : cardWidth
+    const expected = worst === 'height' ? expectedH : expectedW
+    return { valid: false, reason: `Card ${worst} is ${actual}px but expected ~${expected}px at ${dpi} DPI (±10%) — card may be cut off` }
+  }
+  return { valid: true, orientation: isPortrait ? 'portrait' : 'landscape' }
+}
+
+function validateBackground(data, w, h, ch, edges) {
+  const { top, bottom, left, right } = edges
+  const step = Math.max(1, Math.floor(Math.min(w, h) / 200))
+  let bg = 0, total = 0
+  for (let y = 0; y < top; y += step)
+    for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let y = bottom + 1; y < h; y += step)
+    for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let x = 0; x < left; x += step)
+    for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  for (let x = right + 1; x < w; x += step)
+    for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
+  const ratio = total > 0 ? bg / total : 0
+  return { bgRatio: Math.round(ratio * 100) / 100, isBackground: ratio >= 0.9 }
+}
+
+function detectFlushEdges(edges, w, h) {
+  const flush = []
+  if (edges.top <= 0) flush.push('top')
+  if (edges.bottom >= h - 1) flush.push('bottom')
+  if (edges.left <= 0) flush.push('left')
+  if (edges.right >= w - 1) flush.push('right')
+  return { flush, hasFlush: flush.length > 0 }
+}
+
+async function scanImage(file) {
+  const img = await createImageBitmap(file)
+  const w = img.width
+  const h = img.height
+
+  // Draw to canvas and get pixel data
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(img, 0, 0)
+  const imageData = ctx.getImageData(0, 0, w, h)
+  const data = imageData.data
+  const ch = 4 // RGBA
+
+  // Edge detection
+  const edges = detectCardEdges(data, w, h, ch)
+
+  // DPI from image metadata if available (from createImageBitmap)
+  // Fallback: infer from card content vs reference
+  let dpi = null
+  let dpiSource = 'metadata'
+  if (img.dpi && img.dpi[0] >= 100) {
+    dpi = Math.round(img.dpi[0])
+  } else {
+    dpiSource = 'inferred'
+    if (edges.found) {
+      const isPortrait = edges.cardHeight >= edges.cardWidth
+      const wDpi = (edges.cardWidth / REF_CARD_WIDTH_600) * REF_DPI
+      const hDpi = (edges.cardHeight / REF_CARD_HEIGHT_600) * REF_DPI
+      dpi = Math.round((wDpi + hDpi) / 2)
+    } else {
+      dpi = 600 // fallback
+    }
+  }
+
+  const dimensions = edges.found ? validateCardDimensions(edges, dpi) : null
+  const flushEdges = edges.found ? detectFlushEdges(edges, w, h) : null
+  const background = edges.found ? validateBackground(data, w, h, ch, edges) : { bgRatio: 0, isBackground: false }
+
+  const passed = edges.found && dpi >= MIN_DPI && dimensions && dimensions.valid
+
+  // Crop + JPEG conversion
+  let uploadBuffer = null
+  let uploadHash = null
+  let uploadSize = 0
+
+  if (passed) {
+    const maxMargin = Math.round(edges.cardWidth * MAX_MARGIN_RATIO)
+    const cropLeft = edges.left > maxMargin ? edges.left - maxMargin : 0
+    const cropTop = edges.top > maxMargin ? edges.top - maxMargin : 0
+    const cropRight = (w - edges.right - 1) > maxMargin ? edges.right + maxMargin : w
+    const cropBottom = (h - edges.bottom - 1) > maxMargin ? edges.bottom + maxMargin : h
+
+    const cropW = cropRight - cropLeft
+    const cropH = cropBottom - cropTop
+
+    const cropCanvas = document.createElement('canvas')
+    cropCanvas.width = cropW
+    cropCanvas.height = cropH
+    const cropCtx = cropCanvas.getContext('2d')
+    cropCtx.drawImage(img, cropLeft, cropTop, cropW, cropH, 0, 0, cropW, cropH)
+
+    const blob = await new Promise(r => cropCanvas.toBlob(r, 'image/jpeg', JPEG_QUALITY))
+    uploadBuffer = new Uint8Array(await blob.arrayBuffer())
+    const hashBuf = await crypto.subtle.digest('SHA-256', uploadBuffer)
+    uploadHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+    uploadSize = uploadBuffer.length
+  }
+
+  // Original hash
+  const fileBuf = new Uint8Array(await file.arrayBuffer())
+  const origHashBuf = await crypto.subtle.digest('SHA-256', fileBuf)
+  const originalHash = Array.from(new Uint8Array(origHashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
+
+  const warnings = []
+  if (flushEdges && flushEdges.hasFlush) warnings.push(`Card is flush with image edge (${flushEdges.flush.join(', ')}) — verify card is not cut off`)
+  if (edges.found && !background.isBackground) warnings.push(`Background not uniform (${Math.round(background.bgRatio * 100)}%) — scanner bed may have debris`)
+
+  const failures = []
+  if (!edges.found) failures.push('Card edges not detected')
+  if (edges.found && dpi < MIN_DPI) failures.push(`Scanner DPI ${dpi} (minimum ${MIN_DPI})`)
+  if (edges.found && dimensions && !dimensions.valid) failures.push(dimensions.reason)
+
+  return {
+    passed,
+    hash: uploadHash || originalHash,
+    originalHash,
+    width: w,
+    height: h,
+    size: uploadSize || file.size,
+    originalSize: file.size,
+    imageDpi: dpi,
+    cardWidth: edges.cardWidth,
+    cardHeight: edges.cardHeight,
+    uploadBuffer,
+    warnings,
+    failures,
+    checks: {
+      resolution: dpi >= MIN_DPI,
+      cardDetected: edges.found,
+      dimensions: dimensions ? dimensions.valid : false
+    }
+  }
+}
+
 async function handleFiles(fileList) {
   const files = Array.from(fileList)
   if (files.length === 0) return
@@ -269,54 +492,37 @@ async function analyzeFile(idx) {
   if (!scan) return
   const { file, div } = scan
 
-  const formData = new FormData()
-  formData.append('images', file)
-
   try {
-    const res = await fetch(`${API}/analyze`, { method: 'POST', body: formData })
-    const data = await res.json()
-    const r = data.results && data.results[0]
-    if (!r) {
-      div.classList.remove('analyzing')
-      div.classList.add('failed')
-      div.querySelector('.scan-info').innerHTML = `<div class="scan-filename">${file.name}</div><div class="scan-status fail">✗ No result returned</div>`
-      updateBatchBar()
-      return
-    }
-
-    scan.scanId = r.scanId
+    const r = await scanImage(file)
     scan.result = r
+    scan.uploadBuffer = r.uploadBuffer
     div.classList.remove('analyzing')
     div.classList.add(r.passed ? 'ready' : 'failed')
 
     if (r.passed) {
+      // Show processed preview
+      const blob = new Blob([r.uploadBuffer], { type: 'image/jpeg' })
       const preview = div.querySelector('.scan-preview')
-      if (preview) preview.innerHTML = `<img src="${API}/preview/${r.scanId}" alt="processed"><div class="scan-preview-label">Processed</div>`
-      let html = `<div class="scan-filename">${r.filename}</div>`
+      if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="processed"><div class="scan-preview-label">Processed</div>`
+      let html = `<div class="scan-filename">${file.name}</div>`
       html += `<div class="scan-status ready">✓ Validation passed</div>`
       html += `<div class="scan-check-grid">`
-      html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-pass">${r.imageDpi || 'N/A'} DPI</span>`
-      html += `<span class="scan-label">Card size:</span><span class="scan-value">${r.cardWidth || '?'}×${r.cardHeight || '?'} px</span>`
+      html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-pass">${r.imageDpi} DPI</span>`
+      html += `<span class="scan-label">Card size:</span><span class="scan-value">${r.cardWidth}×${r.cardHeight} px</span>`
       html += `<span class="scan-label">Upload size:</span><span class="scan-value">${(r.size / 1024).toFixed(1)}KB</span>`
       html += `</div>`
-      if (r.warnings && r.warnings.length > 0) {
-        html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
-      }
+      if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
       html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Remove</button></div>`
       div.querySelector('.scan-info').innerHTML = html
     } else {
-      if (r.scanId) {
-        const preview = div.querySelector('.scan-preview')
-        if (preview) preview.innerHTML = `<img src="${API}/preview/${r.scanId}" alt="processed"><div class="scan-preview-label">Processed</div>`
-      }
-      let html = `<div class="scan-filename">${r.filename}</div>`
+      let html = `<div class="scan-filename">${file.name}</div>`
       html += `<div class="scan-status fail">✗ Validation failed</div>`
       html += `<div class="scan-check-grid">`
       if (r.imageDpi) html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-fail">${r.imageDpi} DPI</span>`
       html += `</div>`
       html += `<div class="scan-fail-text">Failures:</div>`
-      for (const f of (r.failures || [])) html += `<div class="scan-fail-text">• ${f}</div>`
-      if (r.warnings && r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+      for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
+      if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
       html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Dismiss</button></div>`
       div.querySelector('.scan-info').innerHTML = html
     }
@@ -348,10 +554,7 @@ function updateBatchBar() {
   const failed = active.filter(s => s.result && !s.result.passed)
   const analyzing = active.filter(s => !s.result)
 
-  if (active.length === 0) {
-    batchBar.classList.add('hidden')
-    return
-  }
+  if (active.length === 0) { batchBar.classList.add('hidden'); return }
   batchBar.classList.remove('hidden')
 
   if (analyzing.length > 0) {
@@ -377,7 +580,7 @@ function updateBatchBar() {
 
 async function uploadAll() {
   const btnUploadAll = document.getElementById('btn-upload-all')
-  const passed = scans.filter(s => s && s.result && s.result.passed && s.scanId)
+  const passed = scans.filter(s => s && s.result && s.result.passed && s.uploadBuffer)
   if (passed.length === 0) return
 
   btnUploadAll.disabled = true
@@ -392,15 +595,17 @@ async function uploadAll() {
   }
 
   try {
-    const res = await fetch(`${API}/upload-all`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scanIds: passed.map(s => s.scanId) })
-    })
+    const formData = new FormData()
+    for (const scan of passed) {
+      const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
+      formData.append('files', blob, scan.file.name.replace(/\.[^.]+$/, '.jpg'))
+    }
+
+    const res = await fetch(`${API}/upload-all`, { method: 'POST', body: formData })
     const data = await res.json()
 
     for (const scan of passed) {
-      const upload = data.uploaded && data.uploaded.find(u => u.scanId === scan.scanId)
+      const upload = data.uploaded && data.uploaded.find(u => u.filename === scan.file.name.replace(/\.[^.]+$/, '.jpg'))
       if (upload) {
         scan.div.classList.remove('uploading')
         scan.div.classList.add('passed')
@@ -414,7 +619,7 @@ async function uploadAll() {
         html += `</div>`
         scan.div.querySelector('.scan-info').innerHTML = html
       } else {
-        const err = data.errors && data.errors.find(e => e.scanId === scan.scanId)
+        const err = data.errors && data.errors.find(e => e.filename === scan.file.name.replace(/\.[^.]+$/, '.jpg'))
         scan.div.classList.remove('uploading')
         scan.div.classList.add('failed')
         scan.div.querySelector('.scan-status').className = 'scan-status fail'
