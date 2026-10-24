@@ -87,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStats()
   loadWalletStatus()
   initUploadZone()
+  const btnUploadAll = document.getElementById('btn-upload-all')
+  if (btnUploadAll) btnUploadAll.addEventListener('click', uploadAll)
   handleRoute()
 })
 
@@ -193,7 +195,9 @@ async function loadStats() {
   } catch (e) {}
 }
 
-// --- Upload Zone ---
+// --- Scanner Upload Zone ---
+
+const scans = []
 
 async function loadWalletStatus() {
   const el = document.getElementById('upload-wallet-status')
@@ -222,81 +226,236 @@ async function loadWalletStatus() {
 
 function initUploadZone() {
   const dropzone = document.getElementById('upload-dropzone')
-  const input = document.getElementById('upload-input')
-  if (!dropzone || !input) return
+  const fileInput = document.getElementById('upload-input')
+  if (!dropzone || !fileInput) return
 
-  dropzone.addEventListener('click', () => input.click())
-  input.addEventListener('change', () => {
-    if (input.files[0]) handleUpload(input.files[0])
-    input.value = ''
-  })
-
-  dropzone.addEventListener('dragover', e => {
-    e.preventDefault()
-    dropzone.classList.add('dragover')
-  })
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('dragover')
-  })
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault()
-    dropzone.classList.remove('dragover')
-    const file = e.dataTransfer.files[0]
-    if (file) handleUpload(file)
-  })
+  dropzone.addEventListener('click', () => fileInput.click())
+  fileInput.addEventListener('change', e => handleFiles(e.target.files))
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover') })
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'))
+  dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files) })
 }
 
-let uploading = false
+async function handleFiles(fileList) {
+  const files = Array.from(fileList)
+  if (files.length === 0) return
 
-async function handleUpload(file) {
-  if (uploading) return
-  uploading = true
+  const resultsDiv = document.getElementById('upload-results')
+  const batchBar = document.getElementById('upload-batch-bar')
+  const summaryDiv = document.getElementById('upload-summary')
+  summaryDiv.classList.add('hidden')
 
-  const container = document.getElementById('upload-result-container')
-  container.innerHTML = `
-    <div class="upload-progress">
-      <div class="spinner"></div>
-      <span>Uploading to BSV…</span>
-    </div>
-  `
+  for (const file of files) {
+    const idx = scans.length
+    const div = document.createElement('div')
+    div.className = 'scan-result analyzing'
+    const imgUrl = URL.createObjectURL(file)
+    div.innerHTML = `
+      <div class="scan-preview"><img src="${imgUrl}" alt="original" style="opacity:0.5"></div>
+      <div class="scan-info">
+        <div class="scan-filename">${file.name}</div>
+        <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
+        <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+      </div>
+    `
+    resultsDiv.appendChild(div)
+    scans.push({ file, div, scanId: null, result: null })
+    analyzeFile(idx)
+  }
+}
+
+async function analyzeFile(idx) {
+  const scan = scans[idx]
+  if (!scan) return
+  const { file, div } = scan
 
   const formData = new FormData()
-  formData.append('image', file)
+  formData.append('images', file)
 
   try {
-    const res = await fetch(`${API}/upload`, {
+    const res = await fetch(`${API}/analyze`, { method: 'POST', body: formData })
+    const data = await res.json()
+    const r = data.results && data.results[0]
+    if (!r) {
+      div.classList.remove('analyzing')
+      div.classList.add('failed')
+      div.querySelector('.scan-info').innerHTML = `<div class="scan-filename">${file.name}</div><div class="scan-status fail">✗ No result returned</div>`
+      updateBatchBar()
+      return
+    }
+
+    scan.scanId = r.scanId
+    scan.result = r
+    div.classList.remove('analyzing')
+    div.classList.add(r.passed ? 'ready' : 'failed')
+
+    if (r.passed) {
+      const preview = div.querySelector('.scan-preview')
+      if (preview) preview.innerHTML = `<img src="${API}/preview/${r.scanId}" alt="processed"><div class="scan-preview-label">Processed</div>`
+      let html = `<div class="scan-filename">${r.filename}</div>`
+      html += `<div class="scan-status ready">✓ Validation passed</div>`
+      html += `<div class="scan-check-grid">`
+      html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-pass">${r.imageDpi || 'N/A'} DPI</span>`
+      html += `<span class="scan-label">Card size:</span><span class="scan-value">${r.cardWidth || '?'}×${r.cardHeight || '?'} px</span>`
+      html += `<span class="scan-label">Upload size:</span><span class="scan-value">${(r.size / 1024).toFixed(1)}KB</span>`
+      html += `</div>`
+      if (r.warnings && r.warnings.length > 0) {
+        html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+      }
+      html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Remove</button></div>`
+      div.querySelector('.scan-info').innerHTML = html
+    } else {
+      if (r.scanId) {
+        const preview = div.querySelector('.scan-preview')
+        if (preview) preview.innerHTML = `<img src="${API}/preview/${r.scanId}" alt="processed"><div class="scan-preview-label">Processed</div>`
+      }
+      let html = `<div class="scan-filename">${r.filename}</div>`
+      html += `<div class="scan-status fail">✗ Validation failed</div>`
+      html += `<div class="scan-check-grid">`
+      if (r.imageDpi) html += `<span class="scan-label">Image DPI:</span><span class="scan-value scan-fail">${r.imageDpi} DPI</span>`
+      html += `</div>`
+      html += `<div class="scan-fail-text">Failures:</div>`
+      for (const f of (r.failures || [])) html += `<div class="scan-fail-text">• ${f}</div>`
+      if (r.warnings && r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
+      html += `<div class="scan-actions"><button class="scan-btn-cancel" onclick="removeScan(${idx})">Dismiss</button></div>`
+      div.querySelector('.scan-info').innerHTML = html
+    }
+    updateBatchBar()
+  } catch (err) {
+    div.classList.remove('analyzing')
+    div.classList.add('failed')
+    div.querySelector('.scan-info').innerHTML = `<div class="scan-filename">${file.name}</div><div class="scan-status fail">✗ Error: ${err.message}</div>`
+    updateBatchBar()
+  }
+}
+
+function removeScan(idx) {
+  const scan = scans[idx]
+  if (!scan) return
+  scan.div.remove()
+  scans[idx] = null
+  updateBatchBar()
+}
+
+function updateBatchBar() {
+  const batchBar = document.getElementById('upload-batch-bar')
+  const batchInfo = document.getElementById('upload-batch-info')
+  const btnUploadAll = document.getElementById('btn-upload-all')
+  if (!batchBar) return
+
+  const active = scans.filter(s => s !== null)
+  const passed = active.filter(s => s.result && s.result.passed)
+  const failed = active.filter(s => s.result && !s.result.passed)
+  const analyzing = active.filter(s => !s.result)
+
+  if (active.length === 0) {
+    batchBar.classList.add('hidden')
+    return
+  }
+  batchBar.classList.remove('hidden')
+
+  if (analyzing.length > 0) {
+    batchInfo.innerHTML = `Analyzing ${analyzing.length} image(s)...`
+    btnUploadAll.disabled = true
+  } else if (failed.length > 0) {
+    batchInfo.innerHTML = `<strong>${passed.length}</strong> passed, <strong>${failed.length}</strong> failed — fix or remove failed images to upload`
+    btnUploadAll.disabled = true
+  } else if (passed.length > 0) {
+    if (passed.length === 1) {
+      batchInfo.innerHTML = `<strong>1</strong> image ready to upload`
+      btnUploadAll.textContent = 'Upload to BSV'
+    } else {
+      batchInfo.innerHTML = `<strong>${passed.length}</strong> images ready — will be uploaded and linked via CARDSET`
+      btnUploadAll.textContent = 'Upload All to BSV'
+    }
+    btnUploadAll.disabled = false
+  } else {
+    batchInfo.innerHTML = 'No images ready'
+    btnUploadAll.disabled = true
+  }
+}
+
+async function uploadAll() {
+  const btnUploadAll = document.getElementById('btn-upload-all')
+  const passed = scans.filter(s => s && s.result && s.result.passed && s.scanId)
+  if (passed.length === 0) return
+
+  btnUploadAll.disabled = true
+  btnUploadAll.textContent = 'Uploading...'
+
+  for (const scan of passed) {
+    scan.div.classList.remove('ready')
+    scan.div.classList.add('uploading')
+    scan.div.querySelector('.scan-status').className = 'scan-status uploading'
+    scan.div.querySelector('.scan-status').innerHTML = '<span class="scan-spinner"></span>Uploading...'
+    scan.div.querySelectorAll('.scan-btn-cancel').forEach(b => b.disabled = true)
+  }
+
+  try {
+    const res = await fetch(`${API}/upload-all`, {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scanIds: passed.map(s => s.scanId) })
     })
     const data = await res.json()
 
-    if (!res.ok || data.error) {
-      throw new Error(data.error || `HTTP ${res.status}`)
+    for (const scan of passed) {
+      const upload = data.uploaded && data.uploaded.find(u => u.scanId === scan.scanId)
+      if (upload) {
+        scan.div.classList.remove('uploading')
+        scan.div.classList.add('passed')
+        let html = `<div class="scan-filename">${upload.filename}</div>`
+        html += `<div class="scan-status pass">✓ Uploaded</div>`
+        html += `<div class="scan-detail">`
+        html += `<span class="scan-label">TXID:</span> <span class="scan-txid">${upload.txid}</span><br>`
+        html += `<span class="scan-label">Fee:</span> ${upload.fee} sats<br>`
+        html += `<span class="scan-label">Size:</span> ${(upload.size / 1024).toFixed(1)}KB<br>`
+        html += `<a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>`
+        html += `</div>`
+        scan.div.querySelector('.scan-info').innerHTML = html
+      } else {
+        const err = data.errors && data.errors.find(e => e.scanId === scan.scanId)
+        scan.div.classList.remove('uploading')
+        scan.div.classList.add('failed')
+        scan.div.querySelector('.scan-status').className = 'scan-status fail'
+        scan.div.querySelector('.scan-status').textContent = '✗ Upload failed: ' + (err ? err.error : 'unknown')
+      }
     }
 
-    const sizeKB = (data.size / 1024).toFixed(1)
-    container.innerHTML = `
-      <div class="upload-result success">
-        <div class="upload-result-title success">✓ Uploaded to chain</div>
-        <div class="upload-result-details">
-          TXID: <a href="https://whatsonchain.com/tx/${data.txid}" target="_blank" rel="noopener">${data.txid}</a><br>
-          Size: ${sizeKB} KB · Fee: ${data.fee} sats · TX size: ${data.txSize} bytes
-        </div>
-        <img class="upload-result-preview" src="${API}/img/${data.hash}" alt="Uploaded image" />
-      </div>
-    `
+    // Show summary
+    const summaryDiv = document.getElementById('upload-summary')
+    if (data.uploaded && data.uploaded.length > 0) {
+      let html = '<div class="upload-summary-title">✓ Batch complete</div>'
+      html += `<div class="scan-detail">`
+      html += `<strong>${data.uploaded.length}</strong> image(s) uploaded`
+      if (data.cardset) {
+        html += ` + <strong>CARDSET</strong> created linking ${data.cardset.txidCount} images`
+        html += `<br><span class="scan-label">CARDSET TXID:</span> <span class="scan-txid">${data.cardset.txid}</span>`
+        html += `<br><span class="scan-label">Bind fee:</span> ${data.cardset.fee} sats`
+        html += `<br><a href="https://whatsonchain.com/tx/${data.cardset.txid}" target="_blank" rel="noopener">View CARDSET on WhatsOnChain →</a>`
+      }
+      let totalFee = data.uploaded.reduce((sum, u) => sum + u.fee, 0)
+      if (data.cardset) totalFee += data.cardset.fee
+      html += `<br><span class="scan-label">Total fees:</span> ${totalFee} sats`
+      html += `</div>`
+      summaryDiv.innerHTML = html
+      summaryDiv.classList.remove('hidden')
+    }
+
+    document.getElementById('upload-batch-bar').classList.add('hidden')
     loadStats()
     loadCards(true)
     loadWalletStatus()
-  } catch (e) {
-    container.innerHTML = `
-      <div class="upload-result error">
-        <div class="upload-result-title error">✗ Upload failed</div>
-        <div class="upload-result-details">${e.message}</div>
-      </div>
-    `
-  } finally {
-    uploading = false
+  } catch (err) {
+    for (const scan of passed) {
+      scan.div.classList.remove('uploading')
+      scan.div.classList.add('failed')
+      scan.div.querySelector('.scan-status').className = 'scan-status fail'
+      scan.div.querySelector('.scan-status').textContent = '✗ Error: ' + err.message
+    }
+    document.getElementById('upload-batch-info').innerHTML = '✗ Upload error: ' + err.message
+    btnUploadAll.disabled = false
+    btnUploadAll.textContent = 'Upload All to BSV'
   }
 }
 

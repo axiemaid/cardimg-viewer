@@ -30,18 +30,23 @@
           <span class="page-stats" id="stats-bar"><span id="stat-count">—</span> uploads</span>
         </div>
 
-        <!-- Upload zone -->
+        <!-- Scanner upload zone -->
         <div id="upload-zone">
           <div class="upload-dropzone" id="upload-dropzone">
             <div class="upload-dropzone-inner">
-              <div class="upload-icon">📤</div>
-              <div class="upload-hint">Drop image or <span class="upload-browse-link">browse</span></div>
-              <div class="upload-sub-hint">PNG, JPEG, WebP, GIF · max 10MB · paid by explorer wallet</div>
+              <div class="upload-icon">📷</div>
+              <div class="upload-hint">Click to select or drag & drop card scans</div>
+              <div class="upload-sub-hint">Multiple images in one batch are linked via CARDSET · fees paid by explorer wallet</div>
             </div>
-            <input type="file" id="upload-input" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none" />
+            <input type="file" id="upload-input" multiple accept="image/*" style="display:none" />
           </div>
           <div class="upload-wallet-status" id="upload-wallet-status"></div>
-          <div id="upload-result-container"></div>
+          <div id="upload-results" class="scan-results"></div>
+          <div id="upload-batch-bar" class="scan-batch-bar hidden">
+            <div class="scan-batch-info" id="upload-batch-info"></div>
+            <button class="scan-btn-upload-all" id="btn-upload-all" disabled>Upload All to BSV</button>
+          </div>
+          <div id="upload-summary" class="scan-summary hidden"></div>
         </div>
 
         <div id="loading" class="loading">
