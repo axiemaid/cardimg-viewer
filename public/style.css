@@ -733,7 +733,9 @@ footer .sep { margin: 0 0.5rem; }
 
 .card-zone-placeholder {
   color: var(--text-faint);
-  font-size: 0.75rem;
+  font-size: 3rem;
+  font-weight: 300;
+  line-height: 1;
 }
 
 /* Thumbnail fills entire zone when populated */
