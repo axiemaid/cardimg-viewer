@@ -839,7 +839,7 @@ footer .sep { margin: 0 0.5rem; }
 .scan-status.pass { color: #4a4; }
 .scan-status.fail { color: #f44; }
 .scan-status.analyzing { color: var(--accent); }
-.scan-status.ready { color: var(--accent); }
+.scan-status.ready { color: #4a4; }
 .scan-status.uploading { color: #fa0; }
 
 .scan-txid { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; color: var(--accent); word-break: break-all; }
