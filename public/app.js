@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab
       tabClickClearsFilter = true
-      navigate(tab === 'cards' ? '/' : '/uploads')
+      navigate(tab === 'cards' ? '/' : '/upload')
     })
   })
 
@@ -132,7 +132,7 @@ function handleRoute() {
     return
   }
 
-  if (path === '/uploads') {
+  if (path === '/upload') {
     showGallery('uploads')
     return
   }
