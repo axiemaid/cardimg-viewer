@@ -757,12 +757,12 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .card-zone-label {
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1.1rem;
   color: #c0c0c8;
   text-align: center;
-  text-transform: none;
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.2rem;
 }
 
