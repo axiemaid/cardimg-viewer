@@ -505,27 +505,25 @@ function handleFileDrop(zoneName, file) {
 
 function createScanEntry(zoneName, file, position) {
   const zoneDiv = document.getElementById(`zone-${zoneName}`)
+  const summaryDiv = document.getElementById(`summary-${zoneName}`)
   const zoneLabel = zoneName === 'front' ? 'Front' : 'Back'
   const imgUrl = URL.createObjectURL(file)
 
-  // Render the result directly inside the drop zone
-  zoneDiv.innerHTML = `
-    <div class="zone-result">
-      <div class="zone-result-thumb">
-        <img src="${imgUrl}" alt="${zoneLabel}" class="zone-result-img" style="opacity:0.5">
-      </div>
-      <div class="zone-result-info">
-        <div class="scan-zone-tag">${zoneLabel}</div>
-        <div class="scan-filename">${file.name}</div>
-        <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
-        <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
-        <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
-      </div>
-    </div>
-    <input type="file" accept="image/*" style="display:none" />
-  `
+  // Image fills the entire drop zone
+  zoneDiv.innerHTML = `<img src="${imgUrl}" alt="${zoneLabel}" class="zone-result-img" style="opacity:0.5"><input type="file" accept="image/*" style="display:none" />`
 
-  return { file, zoneDiv, position, zone: zoneName, result: null, uploadBuffer: null }
+  // Summary goes in the summary area
+  if (summaryDiv) {
+    summaryDiv.innerHTML = `
+      <div class="card-zone-label">${zoneLabel}</div>
+      <div class="scan-filename">${file.name}</div>
+      <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
+      <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+      <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
+    `
+  }
+
+  return { file, zoneDiv, summaryDiv, position, zone: zoneName, result: null, uploadBuffer: null }
 }
 
 async function analyzeCard() {
@@ -546,21 +544,20 @@ async function analyzeCard() {
 }
 
 function renderScanResult(scan) {
-  const { file, zone, position, zoneDiv, result: r } = scan
+  const { file, zone, position, zoneDiv, summaryDiv, result: r } = scan
   const zoneLabel = zone === 'front' ? 'Front' : 'Back'
-  const thumbImg = zoneDiv.querySelector('.zone-result-img')
-  const infoDiv = zoneDiv.querySelector('.zone-result-info')
-  if (!infoDiv) return
+  if (!summaryDiv) return
 
   if (r.passed) {
-    // Swap thumb to processed image
-    if (thumbImg) {
-      const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
-      thumbImg.src = URL.createObjectURL(blob)
-      thumbImg.style.opacity = '1'
-      thumbImg.alt = `${zoneLabel} processed`
+    // Swap to processed image
+    const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
+    const img = zoneDiv.querySelector('.zone-result-img')
+    if (img) {
+      img.src = URL.createObjectURL(blob)
+      img.style.opacity = '1'
+      img.alt = `${zoneLabel} processed`
     }
-    let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
+    let html = `<div class="card-zone-label">${zoneLabel}</div>`
     html += `<div class="scan-filename">${file.name}</div>`
     html += `<div class="scan-status pass">✓ Passed</div>`
     html += `<div class="scan-check-grid">`
@@ -570,28 +567,30 @@ function renderScanResult(scan) {
     html += `</div>`
     if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
-    infoDiv.innerHTML = html
+    summaryDiv.innerHTML = html
   } else {
-    let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
+    let html = `<div class="card-zone-label">${zoneLabel}</div>`
     html += `<div class="scan-filename">${file.name}</div>`
     html += `<div class="scan-status fail">✗ Failed</div>`
     if (r.imageDpi) html += `<div class="scan-check-grid"><span class="scan-label">DPI:</span><span class="scan-value scan-fail">${r.imageDpi}</span></div>`
     for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
     if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Dismiss</button></div>`
-    infoDiv.innerHTML = html
+    summaryDiv.innerHTML = html
   }
 }
 
 function removeScan(zone, position) {
   if (zone === 'front') {
     if (cardState.front) {
-      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-empty"><div class="card-zone-label">Front</div><div class="card-zone-placeholder">Drop or click</div></div><input type="file" accept="image/*" style="display:none" />'
+      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div><input type="file" accept="image/*" style="display:none" />'
+      cardState.front.summaryDiv.innerHTML = '<div class="card-zone-label">Front</div>'
       cardState.front = null
     }
   } else if (zone === 'back') {
     if (cardState.back) {
-      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-empty"><div class="card-zone-label">Back</div><div class="card-zone-placeholder">Drop or click</div></div><input type="file" accept="image/*" style="display:none" />'
+      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div><input type="file" accept="image/*" style="display:none" />'
+      cardState.back.summaryDiv.innerHTML = '<div class="card-zone-label">Back</div>'
       cardState.back = null
     }
   }
@@ -629,14 +628,13 @@ async function uploadAll() {
   btnUploadAll.textContent = 'Uploading...'
 
   for (const scan of passed) {
-    const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
-    if (infoDiv) {
-      const status = infoDiv.querySelector('.scan-status')
+    if (scan.summaryDiv) {
+      const status = scan.summaryDiv.querySelector('.scan-status')
       if (status) {
         status.className = 'scan-status uploading'
         status.innerHTML = '<span class="scan-spinner"></span>Uploading...'
       }
-      infoDiv.querySelectorAll('.scan-btn-remove').forEach(b => b.disabled = true)
+      scan.summaryDiv.querySelectorAll('.scan-btn-remove').forEach(b => b.disabled = true)
     }
   }
 
@@ -654,10 +652,9 @@ async function uploadAll() {
     for (const scan of passed) {
       const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
       const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
-      const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
-      if (!infoDiv) continue
+      if (!scan.summaryDiv) continue
       if (upload) {
-        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
+        let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
         html += `<div class="scan-filename">${upload.filename}</div>`
         html += `<div class="scan-status pass">✓ Uploaded</div>`
         html += `<div class="scan-detail">`
@@ -666,12 +663,12 @@ async function uploadAll() {
         html += `<span class="scan-label">Size:</span> ${(upload.size / 1024).toFixed(1)}KB<br>`
         html += `<a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>`
         html += `</div>`
-        infoDiv.innerHTML = html
+        scan.summaryDiv.innerHTML = html
       } else {
         const err = data.errors && data.errors.find(e => e.filename === filename)
-        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
+        let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
         html += `<div class="scan-status fail">✗ Upload failed: ${err ? err.error : 'unknown'}</div>`
-        infoDiv.innerHTML = html
+        scan.summaryDiv.innerHTML = html
       }
     }
 
@@ -700,11 +697,10 @@ async function uploadAll() {
     loadWalletStatus()
   } catch (err) {
     for (const scan of passed) {
-      const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
-      if (infoDiv) {
-        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
+      if (scan.summaryDiv) {
+        let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
         html += `<div class="scan-status fail">✗ Error: ${err.message}</div>`
-        infoDiv.innerHTML = html
+        scan.summaryDiv.innerHTML = html
       }
     }
     btnUploadAll.disabled = false
