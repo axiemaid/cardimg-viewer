@@ -701,8 +701,8 @@ footer .sep { margin: 0 0.5rem; }
 .card-upload-zones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  max-width: 750px;
+  gap: 2rem;
+  max-width: 600px;
   margin: 0 auto;
 }
 
@@ -714,7 +714,7 @@ footer .sep { margin: 0 0.5rem; }
 .card-zone-drop {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
-  aspect-ratio: 3/4;
+  aspect-ratio: 4/5;
   display: flex;
   align-items: center;
   justify-content: center;
