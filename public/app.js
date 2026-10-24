@@ -624,6 +624,7 @@ async function uploadAll() {
   }
 
   try {
+    // Step 1: POST files — server responds immediately with jobId
     const formData = new FormData()
     for (const scan of passed) {
       const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
@@ -631,54 +632,83 @@ async function uploadAll() {
       formData.append('files', blob, filename)
     }
 
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 300000) // 5 min timeout
-    const res = await fetch(`${API}/upload-all`, { method: 'POST', body: formData, signal: controller.signal })
-    clearTimeout(timeout)
-    const data = await res.json()
+    const postRes = await fetch(`${API}/upload-all`, { method: 'POST', body: formData })
+    if (!postRes.ok) throw new Error(`Upload failed: ${postRes.status}`)
+    const { jobId } = await postRes.json()
+    if (!jobId) throw new Error('No jobId returned')
 
-    for (const scan of passed) {
-      const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
-      const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
-      if (!scan.summaryDiv) continue
-      if (upload) {
-        let html = `<div class="scan-status pass">✓ Uploaded</div>`
-        html += `<div class="scan-detail"><a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on chain →</a></div>`
-        scan.summaryDiv.innerHTML = html
-      } else {
-        const err = data.errors && data.errors.find(e => e.filename === filename)
-        let html = `<div class="scan-status fail">✗ ${err ? err.error : 'unknown'}</div>`
-        scan.summaryDiv.innerHTML = html
+    // Step 2: Poll for progress
+    const pollInterval = setInterval(() => pollUploadStatus(jobId), 2000)
+    pollUploadStatus(jobId) // immediate first poll
+
+    async function pollUploadStatus(jobId) {
+      try {
+        const res = await fetch(`${API}/upload-status/${jobId}`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        // Update per-scan status
+        for (const scan of passed) {
+          const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
+          const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
+          if (!scan.summaryDiv) continue
+
+          if (upload) {
+            let html = `<div class="scan-status pass">✓ Uploaded</div>`
+            html += `<div class="scan-detail"><a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on chain →</a></div>`
+            scan.summaryDiv.innerHTML = html
+          } else {
+            const err = data.errors && data.errors.find(e => e.filename === filename)
+            if (err) {
+              scan.summaryDiv.innerHTML = `<div class="scan-status fail">✗ ${err.error}</div>`
+            } else {
+              // Still processing — show progress message
+              const status = scan.summaryDiv.querySelector('.scan-status')
+              if (status) {
+                status.className = 'scan-status uploading'
+                status.innerHTML = `<span class="scan-spinner"></span>${data.progress.message}`
+              }
+            }
+          }
+        }
+
+        if (data.status === 'complete' || data.status === 'failed') {
+          clearInterval(pollInterval)
+
+          // Build summary
+          const summaryDiv = document.getElementById('upload-summary')
+          if (data.uploaded && data.uploaded.length > 0) {
+            let html = '<div class="upload-summary-title">✓ Card uploaded</div>'
+            html += `<div class="scan-detail">`
+            html += `<strong>${data.uploaded.length}</strong> image(s) uploaded`
+            if (data.cardset) {
+              html += ` + <strong>CARDSET</strong> created linking ${data.cardset.txidCount} images`
+              html += `<br><span class="scan-label">CARDSET TXID:</span> <span class="scan-txid">${data.cardset.txid}</span>`
+              html += `<br><span class="scan-label">Bind fee:</span> ${data.cardset.fee} sats`
+              html += `<br><a href="https://whatsonchain.com/tx/${data.cardset.txid}" target="_blank" rel="noopener">View CARDSET on WhatsOnChain →</a>`
+            }
+            let totalFee = data.uploaded.reduce((sum, u) => sum + u.fee, 0)
+            if (data.cardset) totalFee += data.cardset.fee
+            html += `<br><span class="scan-label">Total fees:</span> ${totalFee} sats`
+            html += `</div>`
+            summaryDiv.innerHTML = html
+            summaryDiv.classList.remove('hidden')
+          }
+
+          btnUploadAll.disabled = false
+          btnUploadAll.textContent = 'Upload Card to BSV'
+
+          // Refresh gallery + stats
+          loadStats().catch(() => {})
+          loadCards(true).catch(() => {})
+          loadWalletStatus().catch(() => {})
+        }
+      } catch (e) {
+        // Network hiccup — keep polling, don't abort
       }
     }
-
-    const summaryDiv = document.getElementById('upload-summary')
-    if (data.uploaded && data.uploaded.length > 0) {
-      let html = '<div class="upload-summary-title">✓ Card uploaded</div>'
-      html += `<div class="scan-detail">`
-      html += `<strong>${data.uploaded.length}</strong> image(s) uploaded`
-      if (data.cardset) {
-        html += ` + <strong>CARDSET</strong> created linking ${data.cardset.txidCount} images`
-        html += `<br><span class="scan-label">CARDSET TXID:</span> <span class="scan-txid">${data.cardset.txid}</span>`
-        html += `<br><span class="scan-label">Bind fee:</span> ${data.cardset.fee} sats`
-        html += `<br><a href="https://whatsonchain.com/tx/${data.cardset.txid}" target="_blank" rel="noopener">View CARDSET on WhatsOnChain →</a>`
-      }
-      let totalFee = data.uploaded.reduce((sum, u) => sum + u.fee, 0)
-      if (data.cardset) totalFee += data.cardset.fee
-      html += `<br><span class="scan-label">Total fees:</span> ${totalFee} sats`
-      html += `</div>`
-      summaryDiv.innerHTML = html
-      summaryDiv.classList.remove('hidden')
-    }
-
-    btnUploadAll.disabled = false
-
-    // Refresh gallery + stats (non-blocking — don't let errors here overwrite upload results)
-    loadStats().catch(() => {})
-    loadCards(true).catch(() => {})
-    loadWalletStatus().catch(() => {})
   } catch (err) {
-    const errMsg = err.name === 'AbortError' ? 'Upload timed out — check upload log, images may still be processing' : err.message
+    const errMsg = err.message || 'Upload failed'
     for (const scan of passed) {
       if (scan.summaryDiv) {
         let html = `<div class="card-zone-label">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
