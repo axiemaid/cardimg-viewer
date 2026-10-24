@@ -757,9 +757,9 @@ footer .sep { margin: 0 0.5rem; }
 }
 
 .card-zone-label {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--text);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-faint);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.05em;
