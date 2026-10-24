@@ -486,53 +486,35 @@ async function scanImage(file) {
 function handleFileDrop(zoneName, file) {
   // Front and back: single slot, replace existing
   if (zoneName === 'front') {
-    if (cardState.front) {
-      cardState.front.div.remove()
-      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
-    }
     cardState.front = createScanEntry(zoneName, file, 0)
   } else if (zoneName === 'back') {
-    if (cardState.back) {
-      cardState.back.div.remove()
-      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
-    }
     cardState.back = createScanEntry(zoneName, file, 1)
   }
   analyzeCard()
 }
 
 function createScanEntry(zoneName, file, position) {
-  const resultsDiv = document.getElementById('upload-results')
-  const div = document.createElement('div')
-  div.className = 'scan-result analyzing'
-  div.dataset.zone = zoneName
-  div.dataset.position = position
+  const zoneDiv = document.getElementById(`zone-${zoneName}`)
   const zoneLabel = zoneName === 'front' ? 'Front' : 'Back'
-  div.innerHTML = `
-    <div class="scan-preview"><img src="${URL.createObjectURL(file)}" alt="original" style="opacity:0.5"></div>
-    <div class="scan-info">
-      <div class="scan-zone-tag">${zoneLabel}</div>
-      <div class="scan-filename">${file.name}</div>
-      <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
-      <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+  const imgUrl = URL.createObjectURL(file)
+
+  // Render the result directly inside the drop zone: 50% thumb + 50% info
+  zoneDiv.innerHTML = `
+    <div class="zone-result">
+      <div class="zone-result-thumb">
+        <img src="${imgUrl}" alt="${zoneLabel}" class="zone-result-img" style="opacity:0.5">
+      </div>
+      <div class="zone-result-info">
+        <div class="scan-zone-tag">${zoneLabel}</div>
+        <div class="scan-filename">${file.name}</div>
+        <div class="scan-status analyzing"><span class="scan-spinner"></span>Analyzing...</div>
+        <div class="scan-detail">${(file.size / 1024 / 1024).toFixed(1)}MB</div>
+        <div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button></div>
+      </div>
     </div>
   `
-  resultsDiv.appendChild(div)
 
-  // Show preview inside the drop zone
-  const zoneDiv = document.getElementById(`zone-${zoneName}`)
-  zoneDiv.innerHTML = ''
-  const preview = document.createElement('img')
-  preview.className = 'card-zone-preview'
-  preview.src = URL.createObjectURL(file)
-  preview.alt = `${zoneLabel} preview`
-  zoneDiv.appendChild(preview)
-  const badge = document.createElement('div')
-  badge.className = 'card-zone-badge analyzing'
-  badge.textContent = '⋯'
-  zoneDiv.appendChild(badge)
-
-  return { file, div, zoneDiv, badge, position, zone: zoneName, result: null, uploadBuffer: null }
+  return { file, zoneDiv, position, zone: zoneName, result: null, uploadBuffer: null }
 }
 
 async function analyzeCard() {
@@ -543,13 +525,9 @@ async function analyzeCard() {
       const r = await scanImage(scan.file)
       scan.result = r
       scan.uploadBuffer = r.uploadBuffer
-      scan.div.classList.remove('analyzing')
-      scan.div.classList.add(r.passed ? 'ready' : 'failed')
       renderScanResult(scan)
     } catch (err) {
       scan.result = { passed: false, failures: [err.message], warnings: [], imageDpi: null }
-      scan.div.classList.remove('analyzing')
-      scan.div.classList.add('failed')
       renderScanResult(scan)
     }
   }
@@ -557,24 +535,23 @@ async function analyzeCard() {
 }
 
 function renderScanResult(scan) {
-  const { file, div, zone, position, zoneDiv, badge, result: r } = scan
+  const { file, zone, position, zoneDiv, result: r } = scan
   const zoneLabel = zone === 'front' ? 'Front' : 'Back'
+  const thumbImg = zoneDiv.querySelector('.zone-result-img')
+  const infoDiv = zoneDiv.querySelector('.zone-result-info')
+  if (!infoDiv) return
 
   if (r.passed) {
-    // Swap zone preview to processed image
-    const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
-    const oldPreview = zoneDiv.querySelector('.card-zone-preview')
-    if (oldPreview) {
-      oldPreview.src = URL.createObjectURL(blob)
-      oldPreview.alt = `${zoneLabel} processed`
+    // Swap thumb to processed image
+    if (thumbImg) {
+      const blob = new Blob([scan.uploadBuffer], { type: 'image/jpeg' })
+      thumbImg.src = URL.createObjectURL(blob)
+      thumbImg.style.opacity = '1'
+      thumbImg.alt = `${zoneLabel} processed`
     }
-    if (badge) { badge.className = 'card-zone-badge pass'; badge.textContent = '✓' }
-
-    const preview = div.querySelector('.scan-preview')
-    if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="processed"><div class="scan-preview-label">Processed</div>`
     let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
     html += `<div class="scan-filename">${file.name}</div>`
-    html += `<div class="scan-status ready">✓ Passed</div>`
+    html += `<div class="scan-status pass">✓ Passed</div>`
     html += `<div class="scan-check-grid">`
     html += `<span class="scan-label">DPI:</span><span class="scan-value scan-pass">${r.imageDpi}</span>`
     html += `<span class="scan-label">Card:</span><span class="scan-value">${r.cardWidth}×${r.cardHeight}</span>`
@@ -582,10 +559,8 @@ function renderScanResult(scan) {
     html += `</div>`
     if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Remove</button></div>`
-    div.querySelector('.scan-info').innerHTML = html
+    infoDiv.innerHTML = html
   } else {
-    if (badge) { badge.className = 'card-zone-badge fail'; badge.textContent = '✗' }
-
     let html = `<div class="scan-zone-tag">${zoneLabel}</div>`
     html += `<div class="scan-filename">${file.name}</div>`
     html += `<div class="scan-status fail">✗ Failed</div>`
@@ -593,20 +568,18 @@ function renderScanResult(scan) {
     for (const f of r.failures) html += `<div class="scan-fail-text">• ${f}</div>`
     if (r.warnings.length > 0) html += `<div class="scan-warn">⚠ ${r.warnings.join('; ')}</div>`
     html += `<div class="scan-actions"><button class="scan-btn-remove" onclick="removeScan('${zone}', ${position})">Dismiss</button></div>`
-    div.querySelector('.scan-info').innerHTML = html
+    infoDiv.innerHTML = html
   }
 }
 
 function removeScan(zone, position) {
   if (zone === 'front') {
     if (cardState.front) {
-      cardState.front.div.remove()
       cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
       cardState.front = null
     }
   } else if (zone === 'back') {
     if (cardState.back) {
-      cardState.back.div.remove()
       cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">Drop or click</div>'
       cardState.back = null
     }
@@ -663,11 +636,15 @@ async function uploadAll() {
   btnUploadAll.textContent = 'Uploading...'
 
   for (const scan of passed) {
-    scan.div.classList.remove('ready')
-    scan.div.classList.add('uploading')
-    scan.div.querySelector('.scan-status').className = 'scan-status uploading'
-    scan.div.querySelector('.scan-status').innerHTML = '<span class="scan-spinner"></span>Uploading...'
-    scan.div.querySelectorAll('.scan-btn-remove').forEach(b => b.disabled = true)
+    const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
+    if (infoDiv) {
+      const status = infoDiv.querySelector('.scan-status')
+      if (status) {
+        status.className = 'scan-status uploading'
+        status.innerHTML = '<span class="scan-spinner"></span>Uploading...'
+      }
+      infoDiv.querySelectorAll('.scan-btn-remove').forEach(b => b.disabled = true)
+    }
   }
 
   try {
@@ -684,9 +661,9 @@ async function uploadAll() {
     for (const scan of passed) {
       const filename = scan.file.name.replace(/\.[^.]+$/, '.jpg')
       const upload = data.uploaded && data.uploaded.find(u => u.filename === filename)
+      const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
+      if (!infoDiv) continue
       if (upload) {
-        scan.div.classList.remove('uploading')
-        scan.div.classList.add('passed')
         let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
         html += `<div class="scan-filename">${upload.filename}</div>`
         html += `<div class="scan-status pass">✓ Uploaded</div>`
@@ -696,13 +673,12 @@ async function uploadAll() {
         html += `<span class="scan-label">Size:</span> ${(upload.size / 1024).toFixed(1)}KB<br>`
         html += `<a href="https://whatsonchain.com/tx/${upload.txid}" target="_blank" rel="noopener">View on WhatsOnChain →</a>`
         html += `</div>`
-        scan.div.querySelector('.scan-info').innerHTML = html
+        infoDiv.innerHTML = html
       } else {
         const err = data.errors && data.errors.find(e => e.filename === filename)
-        scan.div.classList.remove('uploading')
-        scan.div.classList.add('failed')
-        scan.div.querySelector('.scan-status').className = 'scan-status fail'
-        scan.div.querySelector('.scan-status').textContent = '✗ Upload failed: ' + (err ? err.error : 'unknown')
+        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
+        html += `<div class="scan-status fail">✗ Upload failed: ${err ? err.error : 'unknown'}</div>`
+        infoDiv.innerHTML = html
       }
     }
 
@@ -731,10 +707,12 @@ async function uploadAll() {
     loadWalletStatus()
   } catch (err) {
     for (const scan of passed) {
-      scan.div.classList.remove('uploading')
-      scan.div.classList.add('failed')
-      scan.div.querySelector('.scan-status').className = 'scan-status fail'
-      scan.div.querySelector('.scan-status').textContent = '✗ Error: ' + err.message
+      const infoDiv = scan.zoneDiv.querySelector('.zone-result-info')
+      if (infoDiv) {
+        let html = `<div class="scan-zone-tag">${scan.zone === 'front' ? 'Front' : 'Back'}</div>`
+        html += `<div class="scan-status fail">✗ Error: ${err.message}</div>`
+        infoDiv.innerHTML = html
+      }
     }
     document.getElementById('upload-batch-info').innerHTML = '✗ Upload error: ' + err.message
     btnUploadAll.disabled = false
