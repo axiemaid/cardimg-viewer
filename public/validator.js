@@ -88,36 +88,62 @@
   // Edge detection (ported from scan.js detectCardEdges)
   // ============================================================
 
+  // Require multiple consecutive steps above threshold to confirm an edge.
+  // This filters out thin noise bands at image borders (scanner artifacts,
+  // JPEG artifacts, light bleed) that spike above threshold for only 1 step
+  // before dropping back to background.
+  const MIN_CONSECUTIVE_STEPS = 3
+
   function detectCardEdges(data, w, h, ch) {
     const sampleStep = Math.max(1, Math.floor(Math.min(w, h) / 100))
     const thresholdRatio = 0.3
 
+    // Find top edge (scan downward from y=0)
     let top = 0
+    let consecutive = 0, firstHit = -1
     for (let y = 0; y < h; y += sampleStep) {
       let cc = 0, sc = 0
       for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
-      if (cc / sc > thresholdRatio) { top = y; break }
+      if (cc / sc > thresholdRatio) {
+        if (consecutive === 0) firstHit = y
+        if (++consecutive >= MIN_CONSECUTIVE_STEPS) { top = firstHit; break }
+      } else { consecutive = 0; firstHit = -1 }
     }
 
+    // Find bottom edge (scan upward from y=h-1)
     let bottom = h - 1
+    consecutive = 0; firstHit = -1
     for (let y = h - 1; y >= 0; y -= sampleStep) {
       let cc = 0, sc = 0
       for (let x = 0; x < w; x += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
-      if (cc / sc > thresholdRatio) { bottom = y; break }
+      if (cc / sc > thresholdRatio) {
+        if (consecutive === 0) firstHit = y
+        if (++consecutive >= MIN_CONSECUTIVE_STEPS) { bottom = firstHit; break }
+      } else { consecutive = 0; firstHit = -1 }
     }
 
+    // Find left edge (scan rightward from x=0)
     let left = 0
+    consecutive = 0; firstHit = -1
     for (let x = 0; x < w; x += sampleStep) {
       let cc = 0, sc = 0
       for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
-      if (cc / sc > thresholdRatio) { left = x; break }
+      if (cc / sc > thresholdRatio) {
+        if (consecutive === 0) firstHit = x
+        if (++consecutive >= MIN_CONSECUTIVE_STEPS) { left = firstHit; break }
+      } else { consecutive = 0; firstHit = -1 }
     }
 
+    // Find right edge (scan leftward from x=w-1)
     let right = w - 1
+    consecutive = 0; firstHit = -1
     for (let x = w - 1; x >= 0; x -= sampleStep) {
       let cc = 0, sc = 0
       for (let y = top; y <= bottom; y += sampleStep) { sc++; if (isContent(getPixel(data, w, x, y, ch))) cc++ }
-      if (cc / sc > thresholdRatio) { right = x; break }
+      if (cc / sc > thresholdRatio) {
+        if (consecutive === 0) firstHit = x
+        if (++consecutive >= MIN_CONSECUTIVE_STEPS) { right = firstHit; break }
+      } else { consecutive = 0; firstHit = -1 }
     }
 
     const cardWidth = right - left
