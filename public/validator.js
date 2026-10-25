@@ -175,22 +175,6 @@
     return { flush, hasFlush: flush.length > 0 }
   }
 
-  function validateBackground(data, w, h, ch, edges) {
-    const { top, bottom, left, right } = edges
-    const step = Math.max(1, Math.floor(Math.min(w, h) / 200))
-    let bg = 0, total = 0
-    for (let y = 0; y < top; y += step)
-      for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
-    for (let y = bottom + 1; y < h; y += step)
-      for (let x = 0; x < w; x += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
-    for (let x = 0; x < left; x += step)
-      for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
-    for (let x = right + 1; x < w; x += step)
-      for (let y = top; y <= bottom; y += step) { total++; if (isBackground(getPixel(data, w, x, y, ch))) bg++ }
-    const ratio = total > 0 ? bg / total : 0
-    return { bgRatio: Math.round(ratio * 100) / 100, isBackground: ratio >= 0.9 }
-  }
-
   // ============================================================
   // Crop logic (ported from scan.js — 5% max margin)
   // ============================================================
@@ -387,8 +371,7 @@
     E_ASPECT: "Image doesn't look like a single card. Crop to the card edges.",
     E_BACK_MISMATCH: 'Back image doesn\'t match the Hyper Battle card back.',
     E_FLUSH: 'Card touches image edges — use a flatbed scanner with the card centered on a black or white bed.',
-    E_BACKGROUND: 'Background is not uniform — use a flatbed scanner with a clean black or white scanning bed.',
-    E_NO_BACKGROUND: 'No background margin detected — card must be surrounded by flat scanner background on all sides.',
+
   }
 
   // ============================================================
@@ -464,20 +447,12 @@
       return { passed: false, errors: [{ code: 'E_DIMENSIONS', message: ERRORS.E_DIMENSIONS(dimensions.reason) }], warnings: [] }
     }
 
-    // Background validation
-    const background = validateBackground(rgba, w, h, ch, edges)
-
     // Flush edge detection
     const flushEdges = detectFlushEdges(edges, w, h)
 
     // Hard gate: card must have background margin on all sides (flatbed scan)
     if (flushEdges.hasFlush) {
       return { passed: false, errors: [{ code: 'E_FLUSH', message: ERRORS.E_FLUSH }], warnings: [] }
-    }
-
-    // Hard gate: background must be uniform (clean scanner bed)
-    if (!background.isBackground) {
-      return { passed: false, errors: [{ code: 'E_BACKGROUND', message: ERRORS.E_BACKGROUND }], warnings: [] }
     }
 
     // Hard gate: aspect ratio must match a trading card (63:88 portrait or landscape)
