@@ -744,6 +744,22 @@ footer .sep { margin: 0 0.5rem; }
   line-height: 1;
 }
 
+/* Label overlay inside the drop zone */
+.card-zone-label-overlay {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
 /* Thumbnail fills entire zone when populated */
 
 .zone-result-img {
@@ -786,13 +802,7 @@ footer .sep { margin: 0 0.5rem; }
   .card-zone-label { font-size: 0.95rem; }
 }
 
-.card-zone-label {
-  font-weight: 400;
-  font-size: 1.1rem;
-  color: #c0c0c8;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.card-zone-bar-spacer {
   flex: 1 1 auto;
 }
 

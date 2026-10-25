@@ -348,7 +348,7 @@ function createScanEntry(zoneName, file, position) {
   const zoneLabel = zoneName === 'front' ? 'Front' : 'Back'
   const imgUrl = URL.createObjectURL(file)
 
-  zoneDiv.innerHTML = `<img src="${imgUrl}" alt="${zoneLabel}" class="zone-result-img" style="opacity:0.5"><input type="file" accept="image/*" style="display:none" />`
+  zoneDiv.innerHTML = `<img src="${imgUrl}" alt="${zoneLabel}" class="zone-result-img" style="opacity:0.5"><div class="card-zone-label-overlay">${zoneLabel}</div><input type="file" accept="image/*" style="display:none" />`
 
   if (barLeft) {
     barLeft.innerHTML = `<button class="scan-btn-remove" onclick="removeScan('${zoneName}', ${position})">Remove</button>`
@@ -455,7 +455,7 @@ function removeScan(zone, position) {
   if (zone === 'front') {
     if (cardState.front) {
       cardState.front.zoneDiv.classList.remove('passed')
-      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><input type="file" accept="image/*" style="display:none" />'
+      cardState.front.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><div class="card-zone-label-overlay">Front</div><input type="file" accept="image/*" style="display:none" />'
       const barLeft = document.getElementById('bar-left-front')
       const details = document.getElementById('details-front')
       if (barLeft) barLeft.innerHTML = ''
@@ -465,7 +465,7 @@ function removeScan(zone, position) {
   } else if (zone === 'back') {
     if (cardState.back) {
       cardState.back.zoneDiv.classList.remove('passed')
-      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><input type="file" accept="image/*" style="display:none" />'
+      cardState.back.zoneDiv.innerHTML = '<div class="card-zone-placeholder">+</div><div class="card-zone-label-overlay">Back</div><input type="file" accept="image/*" style="display:none" />'
       const barLeft = document.getElementById('bar-left-back')
       const details = document.getElementById('details-back')
       if (barLeft) barLeft.innerHTML = ''
