@@ -35,7 +35,12 @@
                 <input type="file" accept="image/*" style="display:none" />
               </div>
               <div class="card-zone-summary" id="summary-front">
-                <div class="card-zone-label">Front</div>
+                <div class="card-zone-bar">
+                  <div class="card-zone-bar-left" id="bar-left-front"></div>
+                  <div class="card-zone-label">Front</div>
+                  <div class="card-zone-bar-right"></div>
+                </div>
+                <div class="card-zone-details" id="details-front"></div>
               </div>
             </div>
             <div class="card-zone" data-zone="back">
@@ -44,7 +49,12 @@
                 <input type="file" accept="image/*" style="display:none" />
               </div>
               <div class="card-zone-summary" id="summary-back">
-                <div class="card-zone-label">Back</div>
+                <div class="card-zone-bar">
+                  <div class="card-zone-bar-left" id="bar-left-back"></div>
+                  <div class="card-zone-label">Back</div>
+                  <div class="card-zone-bar-right"></div>
+                </div>
+                <div class="card-zone-details" id="details-back"></div>
               </div>
             </div>
           </div>
@@ -120,6 +130,7 @@
   </footer>
 
   <script src="/config.js"></script>
+  <script src="/validator.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

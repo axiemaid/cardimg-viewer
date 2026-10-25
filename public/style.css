@@ -757,8 +757,26 @@ footer .sep { margin: 0 0.5rem; }
 .card-zone-summary {
   padding: 0.35rem 0.25rem 0;
   font-size: 0.68rem;
-  text-align: center;
   min-height: 1.2rem;
+}
+
+.card-zone-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 1.8rem;
+}
+
+.card-zone-bar-left {
+  flex: 0 0 auto;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.card-zone-bar-right {
+  flex: 0 0 auto;
+  min-width: 60px;
 }
 
 .card-zone-label {
@@ -768,7 +786,12 @@ footer .sep { margin: 0 0.5rem; }
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.2rem;
+  flex: 1 1 auto;
+}
+
+.card-zone-details {
+  text-align: center;
+  margin-top: 0.1rem;
 }
 
 .scan-status.ready {
@@ -857,7 +880,7 @@ footer .sep { margin: 0 0.5rem; }
 .scan-warn { color: #fa0; font-size: 0.82rem; margin-top: 0.25rem; }
 .scan-fail-text { color: #f66; font-size: 0.82rem; }
 
-.scan-actions { margin-top: 0.5rem; display: flex; gap: 0.5rem; }
+.scan-actions { display: flex; gap: 0.5rem; }
 .scan-btn-remove {
   background: var(--bg-elev2);
   color: var(--text-dim);
