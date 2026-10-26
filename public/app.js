@@ -278,29 +278,34 @@ async function scanImage(file, zoneName) {
   const refs = await ensureRefs()
   const result = await window.HBValidator.validateCardImage(file, zoneName, refs)
 
-  // Run detector for front scans only
-  if (zoneName === 'front') {
-    result.detector = await runDetectorShadow(file)
+  // Run card identification for front scans only
+  if (zoneName === 'front' && result.passed && result.uploadBuffer) {
+    result.idResult = await verifyFront(result.uploadBuffer)
+    if (!result.idResult.ok) {
+      // Override passed — identification failure blocks upload
+      result.passed = false
+      result.failures = result.failures || []
+      result.failures.unshift(`Card ID: ${result.idResult.reason}`)
+    }
   }
 
   return result
 }
 
-// Run cardid-detector for front card identification
-async function runDetectorShadow(file) {
+// Verify a front card JPEG via /verify endpoint
+async function verifyFront(uploadBuffer) {
   try {
+    const blob = new Blob([uploadBuffer], { type: 'image/jpeg' })
     const formData = new FormData()
-    formData.append('image', file)
-    const resp = await fetch(`${API}/detector/match`, {
+    formData.append('image', blob, 'front.jpg')
+    const resp = await fetch(`${API}/verify`, {
       method: 'POST',
       body: formData,
     })
-    if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` }
-    const data = await resp.json()
-    if (data.skipped) return { ok: false, skipped: true }
-    return data
+    if (!resp.ok) return { ok: false, reason: `HTTP ${resp.status}` }
+    return await resp.json()
   } catch (e) {
-    return { ok: false, error: e.message }
+    return { ok: false, reason: e.message }
   }
 }
 
@@ -379,13 +384,13 @@ function renderScanResult(scan) {
       html += `<div class="scan-detail">Card: ${r.cardWidth}×${r.cardHeight}px</div>`
     }
     html += `<div class="scan-detail">Upload: ${(r.size / 1024).toFixed(1)}KB</div>`
-    // Detector result (front scans only)
-    if (r.detector && !r.detector.skipped) {
-      const d = r.detector
+    // Card identification result (front scans only)
+    if (r.idResult) {
+      const d = r.idResult
       if (d.ok) {
         html += `<div class="scan-detail" style="color:var(--text-dim)">ID: ${d.code} (d=${d.distance} m=${d.margin})</div>`
       } else {
-        html += `<div class="scan-detail" style="color:var(--text-dim)">ID: ${d.reason || d.error || 'fail'}</div>`
+        html += `<div class="scan-detail" style="color:#ef4444">ID: ${d.reason || 'fail'}</div>`
       }
     }
     if (r.backResult) {

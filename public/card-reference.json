@@ -1,0 +1,254 @@
+[
+  {
+    "code": "C01",
+    "name": "Luffy",
+    "title": "Future Pirate King",
+    "type": "character"
+  },
+  {
+    "code": "C02",
+    "name": "Luffy",
+    "title": "Gomu Gomu no Pistol",
+    "type": "character"
+  },
+  {
+    "code": "C03",
+    "name": "Luffy",
+    "title": "Gomu Gomu no Whip",
+    "type": "character"
+  },
+  {
+    "code": "C04",
+    "name": "Luffy",
+    "title": "Aspiring Pirate",
+    "type": "character"
+  },
+  {
+    "code": "C05",
+    "name": "Luffy's Hat",
+    "title": "Straw Hat",
+    "type": "character"
+  },
+  {
+    "code": "C06",
+    "name": "Zoro",
+    "title": "The Difference in Status",
+    "type": "character"
+  },
+  {
+    "code": "C07",
+    "name": "Zoro",
+    "title": "Onigiri",
+    "type": "character"
+  },
+  {
+    "code": "C08",
+    "name": "Zoro",
+    "title": "Vow to Kuina",
+    "type": "character"
+  },
+  {
+    "code": "C09",
+    "name": "Nami",
+    "title": "Little Devil",
+    "type": "character"
+  },
+  {
+    "code": "C10",
+    "name": "Nami",
+    "title": "Risk Perception",
+    "type": "character"
+  },
+  {
+    "code": "C11",
+    "name": "Nami",
+    "title": "Bōjutsu",
+    "type": "character"
+  },
+  {
+    "code": "C12",
+    "name": "Usopp",
+    "title": "Lead Star",
+    "type": "character"
+  },
+  {
+    "code": "C13",
+    "name": "Usopp",
+    "title": "Caltrop Hell",
+    "type": "character"
+  },
+  {
+    "code": "C14",
+    "name": "Shanks",
+    "title": "Noble Friendship",
+    "type": "character"
+  },
+  {
+    "code": "C15",
+    "name": "Beckman",
+    "title": "The Capable First Mate",
+    "type": "character"
+  },
+  {
+    "code": "C16",
+    "name": "Kuina",
+    "title": "Qualities of a Swordsman",
+    "type": "character"
+  },
+  {
+    "code": "C17",
+    "name": "Koby",
+    "title": "Dream of Being a Marine",
+    "type": "character"
+  },
+  {
+    "code": "C18",
+    "name": "Rika",
+    "title": "Onigiri",
+    "type": "character"
+  },
+  {
+    "code": "C19",
+    "name": "Boodle",
+    "title": "Affection for the Town",
+    "type": "character"
+  },
+  {
+    "code": "C20",
+    "name": "Chouchou",
+    "title": "Loyal Dog",
+    "type": "character"
+  },
+  {
+    "code": "C21",
+    "name": "Alvida",
+    "title": "Fastidious Person",
+    "type": "character"
+  },
+  {
+    "code": "C22",
+    "name": "Morgan",
+    "title": "Authority",
+    "type": "character"
+  },
+  {
+    "code": "C23",
+    "name": "Helmeppo",
+    "title": "Empty Promise",
+    "type": "character"
+  },
+  {
+    "code": "C24",
+    "name": "Buggy",
+    "title": "Obsession with Treasure",
+    "type": "character"
+  },
+  {
+    "code": "C25",
+    "name": "Buggy",
+    "title": "Bara Bara Kinkyu Dasshutsu",
+    "type": "character"
+  },
+  {
+    "code": "C26",
+    "name": "Buggy Cannon",
+    "title": "Cannon",
+    "type": "character"
+  },
+  {
+    "code": "C27",
+    "name": "Mohji",
+    "title": "Beast Tamer",
+    "type": "character"
+  },
+  {
+    "code": "C28",
+    "name": "Richie",
+    "title": "Lion's Onslaught",
+    "type": "character"
+  },
+  {
+    "code": "C29",
+    "name": "Cabaji",
+    "title": "Theater of One HundredKamikaze Tops",
+    "type": "character"
+  },
+  {
+    "code": "C30",
+    "name": "Lord of the Coast",
+    "title": "Dragon's Fang",
+    "type": "character"
+  },
+  {
+    "code": "C31",
+    "name": "Alvida Crew",
+    "title": "Loyalty to the Goddess",
+    "type": "character"
+  },
+  {
+    "code": "C32",
+    "name": "Morgan Troops",
+    "title": "Complete Submission",
+    "type": "character"
+  },
+  {
+    "code": "C33",
+    "name": "Buggy Crew",
+    "title": "Flashy Combat",
+    "type": "character"
+  },
+  {
+    "code": "C34",
+    "name": "Red Hair Pirates",
+    "title": "Brave Men of the Sea",
+    "type": "character"
+  },
+  {
+    "code": "S01",
+    "name": "Luffy Pirates",
+    "title": "Pirate's Party",
+    "type": "special"
+  },
+  {
+    "code": "S02",
+    "name": "Luffy",
+    "title": "Qualities of a Captain",
+    "type": "special"
+  },
+  {
+    "code": "S03",
+    "name": "Gomu Gomu no Mi",
+    "title": "Devil Fruit",
+    "type": "special"
+  },
+  {
+    "code": "S04",
+    "name": "Zoro",
+    "title": "Santōryū",
+    "type": "special"
+  },
+  {
+    "code": "S05",
+    "name": "Nami",
+    "title": "Pirate Thief",
+    "type": "special"
+  },
+  {
+    "code": "S06",
+    "name": "Shanks",
+    "title": "Hero's Lunch",
+    "type": "special"
+  },
+  {
+    "code": "S07",
+    "name": "Morgan",
+    "title": "Captains Title",
+    "type": "special"
+  },
+  {
+    "code": "S08",
+    "name": "Buggy",
+    "title": "Bara Bara Festival",
+    "type": "special"
+  }
+]
